@@ -1,0 +1,29 @@
+{
+  "name": "kktc-cumhurbaskanligi-oylama",
+  "version": "1.0.0",
+  "description": "KKTC Cumhurbaşkanlığı Seçimi Oylama Uygulaması",
+  "main": "server.js",
+  "scripts": {
+    "start": "NODE_ENV=production node server.js",
+    "dev": "NODE_ENV=development nodemon server.js",
+    "build": "echo 'No build step required for Node.js app'",
+    "test": "echo 'Tests not implemented yet'",
+    "security-audit": "npm audit",
+    "security-fix": "npm audit fix",
+    "vercel-build": "echo 'Vercel build completed'"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "@supabase/supabase-js": "^2.38.0",
+    "cors": "^2.8.5",
+    "helmet": "^7.1.0",
+    "express-rate-limit": "^7.1.5",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "keywords": ["kktc", "seçim", "oylama", "cumhurbaşkanlığı"],
+  "author": "KKTC Seçim Uygulaması",
+  "license": "MIT"
+}

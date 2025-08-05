@@ -1,0 +1,780 @@
+/* Reset ve temel stiller */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #f8fafc;
+    min-height: 100vh;
+    color: #0f172a;
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Header */
+.header {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #0f172a;
+    background: white;
+    padding: 20px 15px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+}
+
+.header h1 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: #0f172a;
+}
+
+.subtitle {
+    font-size: 1rem;
+    color: #64748b;
+    margin-bottom: 10px;
+}
+
+.badge {
+    display: inline-block;
+    background: #f1f5f9;
+    color: #475569;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    border: 1px solid #e2e8f0;
+}
+
+/* Countdown Timer */
+.countdown-section {
+    background: white;
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 20px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    text-align: center;
+}
+
+.countdown-title {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 0.95rem;
+    color: #64748b;
+    margin-bottom: 12px;
+}
+
+.clock-icon {
+    width: 20px;
+    height: 20px;
+    stroke-width: 2;
+}
+
+.countdown-timer {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+
+.time-unit {
+    background: #0f172a;
+    border-radius: 6px;
+    padding: 8px 12px;
+    min-width: 60px;
+    border: 1px solid #334155;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+}
+
+.time-value {
+    display: block;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: white;
+}
+
+.time-label {
+    display: block;
+    font-size: 0.75rem;
+    color: #cbd5e1;
+    margin-top: 3px;
+}
+
+.election-date {
+    color: #0f172a;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+/* Navigation Tabs */
+.nav-tabs {
+    display: flex;
+    background: white;
+    border-radius: 8px;
+    padding: 4px;
+    margin-bottom: 15px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+}
+
+.nav-tab {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border: none;
+    background: transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 500;
+    color: #64748b;
+    font-size: 0.875rem;
+}
+
+.nav-tab.active {
+    background: #0f172a;
+    color: white;
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+.nav-tab:hover:not(.active) {
+    background: #f1f5f9;
+    color: #334155;
+}
+
+.tab-icon {
+    width: 18px;
+    height: 18px;
+    stroke-width: 2;
+}
+
+/* Tab Content */
+.tab-content {
+    display: none;
+    background: white;
+    border-radius: 12px;
+    padding: 30px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.tab-content h2 {
+    font-size: 1.8rem;
+    margin-bottom: 10px;
+    color: #0f172a;
+    font-weight: 600;
+}
+
+.section-subtitle {
+    color: #64748b;
+    margin-bottom: 30px;
+}
+
+/* Candidates Grid */
+.candidates-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 25px;
+    margin-bottom: 30px;
+}
+
+.candidate-card {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid #e2e8f0;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+}
+
+.candidate-card:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+.candidate-card.selected {
+    background: #f8fafc;
+    border-width: 2px;
+}
+
+/* Seçili aday border renkleri */
+.candidate-card[data-candidate="tufan-erhurman"].selected {
+    border-color: #dc2626;
+    background: #fef2f2;
+}
+
+.candidate-card[data-candidate="ersin-tatar"].selected {
+    border-color: #2563eb;
+    background: #eff6ff;
+}
+
+.candidate-card[data-candidate="mehmet-hasguler"].selected {
+    border-color: #16a34a;
+    background: #f0fdf4;
+}
+
+.candidate-image {
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 20px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid #e2e8f0;
+}
+
+.candidate-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.candidate-avatar {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    transition: transform 0.3s ease;
+    object-fit: cover;
+    display: block;
+}
+
+.candidate-card:hover .candidate-avatar {
+    transform: scale(1.05);
+}
+
+.candidate-info h3 {
+    font-size: 1.3rem;
+    margin-bottom: 8px;
+    color: #0f172a;
+    font-weight: 600;
+}
+
+.party {
+    color: white;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-block;
+    margin-bottom: 12px;
+    letter-spacing: 0.025em;
+}
+
+/* Parti renkleri */
+.candidate-card[data-candidate="tufan-erhurman"] .party {
+    background: #dc2626;
+}
+
+.candidate-card[data-candidate="ersin-tatar"] .party {
+    background: #2563eb;
+}
+
+.candidate-card[data-candidate="mehmet-hasguler"] .party {
+    background: #16a34a;
+}
+
+.description {
+    color: #64748b;
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+.vote-percentage {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.75rem;
+    letter-spacing: 0.025em;
+}
+
+/* Oy yüzdesi renkleri */
+.candidate-card[data-candidate="tufan-erhurman"] .vote-percentage {
+    background: #dc2626;
+}
+
+.candidate-card[data-candidate="ersin-tatar"] .vote-percentage {
+    background: #2563eb;
+}
+
+.candidate-card[data-candidate="mehmet-hasguler"] .vote-percentage {
+    background: #16a34a;
+}
+
+/* Vote Stats */
+.vote-stats {
+    background: white;
+    border-radius: 12px;
+    padding: 30px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    margin-top: 40px;
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.vote-stats h2 {
+    color: #0f172a;
+    margin-bottom: 20px;
+    font-size: 1.8rem;
+    font-weight: 600;
+}
+
+.total-votes {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    background: #f8fafc;
+    padding: 16px 24px;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #0f172a;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+}
+
+.votes-count {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.votes-label {
+    color: #64748b;
+    font-weight: 500;
+}
+
+/* Vote Button */
+.vote-button {
+    width: 100%;
+    padding: 16px 24px;
+    background: #0f172a;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.vote-button:hover:not(:disabled) {
+    background: #1e293b;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+.vote-button:active {
+    background: #334155;
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+.vote-button:disabled {
+    background: #94a3b8;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+/* Security Features */
+.security-features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 24px;
+}
+
+.security-item {
+    text-align: center;
+    padding: 24px;
+    background: white;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+}
+
+.security-icon {
+    font-size: 3rem;
+    margin-bottom: 16px;
+    color: #64748b;
+}
+
+.security-item h3 {
+    margin-bottom: 12px;
+    color: #0f172a;
+    font-weight: 600;
+}
+
+.security-item p {
+    color: #64748b;
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+/* Info Content */
+.info-content {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.info-item {
+    padding: 20px;
+    background: white;
+    border-radius: 12px;
+    border-left: 4px solid #0f172a;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+}
+
+.info-item h3 {
+    margin-bottom: 12px;
+    color: #0f172a;
+    font-weight: 600;
+}
+
+.info-item p {
+    color: #64748b;
+    line-height: 1.6;
+}
+
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal.show {
+    display: flex;
+}
+
+.modal-content {
+    background: white;
+    padding: 32px;
+    border-radius: 12px;
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+}
+
+.modal-content h3 {
+    margin-bottom: 16px;
+    color: #0f172a;
+    font-weight: 600;
+}
+
+.modal-content p {
+    margin-bottom: 25px;
+    color: #666;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+.btn-primary, .btn-secondary {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background: #007bff;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #0056b3;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #545b62;
+}
+
+/* Message Container */
+#message-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1001;
+}
+
+.message {
+    padding: 15px 20px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    font-weight: 500;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    animation: slideIn 0.3s ease;
+}
+
+.message.success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.message.error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Results Section */
+.results-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin-top: 20px;
+}
+
+.chart-container {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    border: 1px solid #e2e8f0;
+    height: 400px;
+}
+
+.simple-chart {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.chart-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #1f2937;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.chart-bars {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    gap: 15px;
+}
+
+.chart-bar {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.bar-label {
+    font-weight: 500;
+    color: #374151;
+    font-size: 0.9rem;
+}
+
+.bar-container {
+    background: #f3f4f6;
+    border-radius: 4px;
+    height: 25px;
+    position: relative;
+    overflow: hidden;
+}
+
+.bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 8px;
+    color: white;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.bar-value {
+    font-size: 0.8rem;
+    color: #6b7280;
+    text-align: right;
+}
+
+.results-stats {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+}
+
+.stat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 0;
+    border-bottom: 1px solid #e2e8f0;
+    margin-bottom: 20px;
+}
+
+.stat-label {
+    font-weight: 600;
+    color: #374151;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #dc2626;
+}
+
+.candidates-results {
+    space-y: 15px;
+}
+
+.candidate-result {
+    padding: 15px;
+    background: #f8fafc;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.candidate-name {
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 5px;
+}
+
+.candidate-votes {
+    color: #6b7280;
+    font-size: 0.9rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .results-container {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .container {
+        padding: 15px;
+    }
+    
+    .header h1 {
+        font-size: 2rem;
+    }
+    
+    .countdown-timer {
+        gap: 10px;
+    }
+    
+    .time-unit {
+        padding: 10px 15px;
+        min-width: 70px;
+    }
+    
+    .time-value {
+        font-size: 1.5rem;
+    }
+    
+    .nav-tab {
+        padding: 12px 15px;
+        font-size: 0.9rem;
+    }
+    
+    .candidates-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .candidate-card {
+        padding: 20px;
+    }
+    
+    .candidate-image {
+        width: 100px;
+        height: 100px;
+    }
+    
+    .modal-buttons {
+        flex-direction: column;
+    }
+    
+    .security-features {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .countdown-timer {
+        grid-template-columns: repeat(2, 1fr);
+        display: grid;
+    }
+    
+    .nav-tabs {
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .nav-tab {
+        justify-content: flex-start;
+    }
+}

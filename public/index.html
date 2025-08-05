@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2025 BAŞKANLIK SEÇİMİ - Online Oylama Sistemi</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>2025 BAŞKANLIK SEÇİMİ</h1>
+            <p class="subtitle">Online Oylama Sistemi</p>
+            <div class="badge">Eğlence Amaçlı - Resmi Değildir</div>
+        </header>
+
+        <!-- Countdown Timer -->
+        <section class="countdown-section">
+            <div class="countdown-title">
+                <svg class="clock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12,6 12,12 16,14"></polyline>
+                </svg>
+                Seçime Kalan Süre
+            </div>
+            <div class="countdown-timer">
+                <div class="time-unit">
+                    <span class="time-value" id="days">75</span>
+                    <span class="time-label">Gün</span>
+                </div>
+                <div class="time-unit">
+                    <span class="time-value" id="hours">10</span>
+                    <span class="time-label">Saat</span>
+                </div>
+                <div class="time-unit">
+                    <span class="time-value" id="minutes">21</span>
+                    <span class="time-label">Dakika</span>
+                </div>
+                <div class="time-unit">
+                    <span class="time-value" id="seconds">36</span>
+                    <span class="time-label">Saniye</span>
+                </div>
+            </div>
+            <div class="election-date">19 Ekim 2025</div>
+        </section>
+
+        <!-- Navigation Tabs -->
+        <nav class="nav-tabs">
+            <button class="nav-tab active" data-tab="voting">
+                <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M9 11H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2h-4"></path>
+                    <polyline points="9,11 12,14 15,11"></polyline>
+                    <line x1="12" y1="2" x2="12" y2="14"></line>
+                </svg>
+                Oylama
+            </button>
+            <button class="nav-tab" data-tab="security">
+                <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                </svg>
+                Güvenlik
+            </button>
+            <button class="nav-tab" data-tab="results">
+                <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M3 3v18h18"></path>
+                    <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"></path>
+                </svg>
+                Sonuçlar
+            </button>
+            <button class="nav-tab" data-tab="info">
+                <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+                Bilgilendirme
+            </button>
+        </nav>
+
+        <!-- Voting Section -->
+        <section id="voting-section" class="tab-content active">
+            <h2>Adayları Değerlendirin</h2>
+            <p class="section-subtitle">Aşağıdaki adaylardan birini seçerek oyunuzu kullanın</p>
+            
+            <div class="candidates-grid">
+                <!-- Tufan Erhürman -->
+                <div class="candidate-card" data-candidate="tufan-erhurman">
+                    <div class="candidate-image">
+                        <img src="TufanErhurman.jpg" alt="Tufan Erhürman" class="candidate-avatar">
+                    </div>
+                    <div class="candidate-info">
+                        <h3>Tufan Erhürman</h3>
+                        <p class="party">CTP</p>
+                        <p class="description">Cumhuriyet Türk Partisi Genel Başkanı, deneyimli siyasetçi</p>
+                    </div>
+                    <div class="vote-percentage" id="percentage-tufan-erhurman">0%</div>
+                </div>
+
+                <!-- Ersin Tatar -->
+                <div class="candidate-card" data-candidate="ersin-tatar">
+                    <div class="candidate-image">
+                        <img src="Ersin_Tatar.jpg" alt="Ersin Tatar" class="candidate-avatar">
+                    </div>
+                    <div class="candidate-info">
+                        <h3>Ersin Tatar</h3>
+                        <p class="party">UBP</p>
+                        <p class="description">Ulusal Birlik Partisi Genel Başkanı, mevcut cumhurbaşkanı</p>
+                    </div>
+                    <div class="vote-percentage" id="percentage-ersin-tatar">0%</div>
+                </div>
+
+                <!-- Mehmet Hasgüler -->
+                <div class="candidate-card" data-candidate="mehmet-hasguler">
+                    <div class="candidate-image">
+                        <img src="MehmetHasguler.jpg" alt="Mehmet Hasgüler" class="candidate-avatar">
+                    </div>
+                    <div class="candidate-info">
+                        <h3>Mehmet Hasgüler</h3>
+                        <p class="party">BKP</p>
+                        <p class="description">Birleşik Kıbrıs Partisi Genel Başkanı</p>
+                    </div>
+                    <div class="vote-percentage" id="percentage-mehmet-hasguler">0%</div>
+                </div>
+            </div>
+
+            <div class="vote-stats">
+                <div class="total-votes">
+                    <span class="votes-count" id="total-votes">0</span>
+                    <span class="votes-label">Toplam Oy</span>
+                </div>
+            </div>
+
+            <button id="vote-btn" class="vote-button" disabled>
+                OYUMU KULLAN
+            </button>
+        </section>
+
+        <!-- Results Section -->
+        <section id="results-section" class="tab-content">
+            <h2>Anlık Sonuçlar</h2>
+            <p class="section-subtitle">Güncel oy dağılımı ve istatistikler</p>
+            
+            <div class="results-container">
+                <div class="chart-container">
+                    <div class="simple-chart">
+                        <div class="chart-title">Oy Dağılımı</div>
+                        <div class="chart-bars">
+                            <div class="chart-bar" data-candidate="ersin">
+                                <div class="bar-label">Ersin Tatar</div>
+                                <div class="bar-container">
+                                    <div class="bar-fill" id="bar-ersin" style="width: 33%; background-color: #dc2626;"></div>
+                                </div>
+                                <div class="bar-value" id="value-ersin">0 oy (0%)</div>
+                            </div>
+                            <div class="chart-bar" data-candidate="tufan">
+                                <div class="bar-label">Tufan Erhürman</div>
+                                <div class="bar-container">
+                                    <div class="bar-fill" id="bar-tufan" style="width: 33%; background-color: #2563eb;"></div>
+                                </div>
+                                <div class="bar-value" id="value-tufan">0 oy (0%)</div>
+                            </div>
+                            <div class="chart-bar" data-candidate="mehmet">
+                                <div class="bar-label">Mehmet Hasgüler</div>
+                                <div class="bar-container">
+                                    <div class="bar-fill" id="bar-mehmet" style="width: 34%; background-color: #16a34a;"></div>
+                                </div>
+                                <div class="bar-value" id="value-mehmet">1 oy (100%)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="results-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Toplam Oy:</span>
+                        <span class="stat-value" id="results-total-votes">0</span>
+                    </div>
+                    <div class="candidates-results">
+                        <div class="candidate-result">
+                            <div class="candidate-name">Ersin Tatar</div>
+                            <div class="candidate-votes">
+                                <span id="ersin-votes">0</span> oy
+                                (<span id="ersin-percentage">0</span>%)
+                            </div>
+                        </div>
+                        <div class="candidate-result">
+                            <div class="candidate-name">Tufan Erhürman</div>
+                            <div class="candidate-votes">
+                                <span id="tufan-votes">0</span> oy
+                                (<span id="tufan-percentage">0</span>%)
+                            </div>
+                        </div>
+                        <div class="candidate-result">
+                            <div class="candidate-name">Mehmet Hasgüler</div>
+                            <div class="candidate-votes">
+                                <span id="mehmet-votes">0</span> oy
+                                (<span id="mehmet-percentage">0</span>%)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Security Section -->
+        <section id="security-section" class="tab-content">
+            <h2>Güvenlik Önlemleri</h2>
+            <div class="security-features">
+                <div class="security-item">
+                    <div class="security-icon">🔒</div>
+                    <h3>Anonim Oylama</h3>
+                    <p>Oylar tamamen anonim olarak kaydedilir, kişisel bilgi toplanmaz.</p>
+                </div>
+                <div class="security-item">
+                    <div class="security-icon">🛡️</div>
+                    <h3>Tekrar Oy Engelleme</h3>
+                    <p>Her cihazdan sadece bir kez oy kullanılabilir.</p>
+                </div>
+                <div class="security-item">
+                    <div class="security-icon">⚡</div>
+                    <h3>Rate Limiting</h3>
+                    <p>Bot saldırılarına karşı hız sınırlaması uygulanır.</p>
+                </div>
+                <div class="security-item">
+                    <div class="security-icon">🔐</div>
+                    <h3>Güvenli Veritabanı</h3>
+                    <p>Supabase RLS politikaları ile veri güvenliği sağlanır.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Info Section -->
+        <section id="info-section" class="tab-content">
+            <h2>Bilgilendirme</h2>
+            <div class="info-content">
+                <div class="info-item">
+                    <h3>⚠️ Önemli Uyarı</h3>
+                    <p>Bu uygulama eğlence amaçlı olup resmi bir seçim uygulaması değildir. Gerçek seçim sonuçlarını etkilemez.</p>
+                </div>
+                <div class="info-item">
+                    <h3>📅 Seçim Tarihi</h3>
+                    <p>KKTC Cumhurbaşkanlığı Seçimi 19 Ekim 2025 tarihinde yapılacaktır.</p>
+                </div>
+                <div class="info-item">
+                    <h3>🗳️ Nasıl Çalışır?</h3>
+                    <p>Bir aday seçin ve "OYUMU KULLAN" butonuna tıklayın. Oyunuz anonim olarak kaydedilecek ve sonuçlar anında güncellenecektir.</p>
+                </div>
+                <div class="info-item">
+                    <h3>🔄 Sonuçlar</h3>
+                    <p>Oy sonuçları gerçek zamanlı olarak güncellenir ve yüzdelik dilimler halinde gösterilir.</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Vote Confirmation Modal -->
+    <div id="vote-modal" class="modal">
+        <div class="modal-content">
+            <h3>Oy Onayı</h3>
+            <p id="vote-confirmation-text">Seçiminizi onaylıyor musunuz?</p>
+            <div class="modal-buttons">
+                <button id="confirm-vote" class="btn-primary">Evet, Oyluyorum</button>
+                <button id="cancel-vote" class="btn-secondary">İptal</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success/Error Messages -->
+    <div id="message-container"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
