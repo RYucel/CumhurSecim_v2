@@ -36,8 +36,8 @@ let demoIpAddresses = new Set();
 let demoVoteLog = [];
 
 // Seçim zamanı kısıtlamaları
-// KKTC Cumhurbaşkanlığı Seçimi: 19 Ocak 2025 tarihine kadar oy verilebilir
-const ELECTION_END = new Date('2025-01-19T23:59:59+03:00');   // 19 Ocak 2025, 23:59 (UTC+3)
+// KKTC Cumhurbaşkanlığı Seçimi: Anket amaçlı süresiz oy verme
+const ELECTION_END = new Date('2025-12-31T23:59:59+03:00');   // 31 Aralık 2025, 23:59 (UTC+3)
 
 // Test modu için environment variable
 const TEST_MODE = process.env.NODE_ENV === 'development' || process.env.TEST_MODE === 'true';
@@ -181,7 +181,7 @@ app.post('/api/vote', voteLimit, async (req, res) => {
     if (!isElectionTime()) {
       logVoteAttempt(clientIp, fingerprint, candidate, false, 'Election period ended');
       return res.status(403).json({ 
-        error: 'Seçim süresi sona ermiştir. Son oy verme tarihi: 19 Ocak 2025',
+        error: 'Anket süresi sona ermiştir. Son oy verme tarihi: 31 Aralık 2025',
         election_end: ELECTION_END.toISOString()
       });
     }
