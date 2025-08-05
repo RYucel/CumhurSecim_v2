@@ -77,21 +77,20 @@ CREATE TRIGGER check_ip_limit_trigger
 CREATE OR REPLACE FUNCTION check_election_time()
 RETURNS TRIGGER AS $$
 BEGIN
-    -- KKTC Seçim Zamanı: 19 Ocak 2025, 08:00-18:00 (UTC+3)
-    IF NOW() AT TIME ZONE 'Europe/Istanbul' < '2025-01-19 08:00:00'::timestamp 
-       OR NOW() AT TIME ZONE 'Europe/Istanbul' > '2025-01-19 18:00:00'::timestamp THEN
-        RAISE EXCEPTION 'Oy verme saatleri: 19 Ocak 2025, 08:00-18:00 arası';
+    -- KKTC Seçim Zamanı: 19 Ocak 2025 tarihine kadar oy verilebilir
+    IF NOW() AT TIME ZONE 'Europe/Istanbul' > '2025-01-19 23:59:59'::timestamp THEN
+        RAISE EXCEPTION 'Seçim süresi sona ermiştir. Son oy verme tarihi: 19 Ocak 2025';
     END IF;
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
--- Seçim zamanı trigger'ı (production'da aktifleştirin)
--- DROP TRIGGER IF EXISTS check_election_time_trigger ON votes;
--- CREATE TRIGGER check_election_time_trigger
---     BEFORE INSERT ON votes
---     FOR EACH ROW
---     EXECUTE FUNCTION check_election_time();
+-- Seçim zamanı trigger'ı aktif
+DROP TRIGGER IF EXISTS check_election_time_trigger ON votes;
+CREATE TRIGGER check_election_time_trigger
+    BEFORE INSERT ON votes
+    FOR EACH ROW
+    EXECUTE FUNCTION check_election_time();
 
 -- 8. Sonuçları görüntülemek için view oluştur
 CREATE OR REPLACE VIEW election_results AS
