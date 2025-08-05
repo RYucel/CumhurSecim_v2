@@ -36,9 +36,8 @@ let demoIpAddresses = new Set();
 let demoVoteLog = [];
 
 // Seçim zamanı kısıtlamaları
-// KKTC Cumhurbaşkanlığı Seçimi: 19 Ocak 2025, 08:00-18:00
-const ELECTION_START = new Date('2025-01-19T08:00:00+03:00'); // 19 Ocak 2025, 08:00 (UTC+3)
-const ELECTION_END = new Date('2025-01-19T18:00:00+03:00');   // 19 Ocak 2025, 18:00 (UTC+3)
+// KKTC Cumhurbaşkanlığı Seçimi: 19 Ocak 2025 tarihine kadar oy verilebilir
+const ELECTION_END = new Date('2025-01-19T23:59:59+03:00');   // 19 Ocak 2025, 23:59 (UTC+3)
 
 // Test modu için environment variable
 const TEST_MODE = process.env.NODE_ENV === 'development' || process.env.TEST_MODE === 'true';
@@ -51,7 +50,7 @@ function isElectionTime() {
     }
     
     const now = new Date();
-    return now >= ELECTION_START && now <= ELECTION_END;
+    return now <= ELECTION_END;
 }
 
 function validateFingerprint(fingerprint) {
@@ -180,10 +179,9 @@ app.post('/api/vote', voteLimit, async (req, res) => {
 
     // Seçim zamanı kontrolü
     if (!isElectionTime()) {
-      logVoteAttempt(clientIp, fingerprint, candidate, false, 'Outside election hours');
+      logVoteAttempt(clientIp, fingerprint, candidate, false, 'Election period ended');
       return res.status(403).json({ 
-        error: 'Oy verme saatleri: 19 Ocak 2025, 08:00 - 18:00 arası',
-        election_start: ELECTION_START.toISOString(),
+        error: 'Seçim süresi sona ermiştir. Son oy verme tarihi: 19 Ocak 2025',
         election_end: ELECTION_END.toISOString()
       });
     }
@@ -358,7 +356,6 @@ app.get('/api/status', (req, res) => {
   res.json({
     server_time: now.toISOString(),
     election_active: isElectionTime(),
-    election_start: ELECTION_START.toISOString(),
     election_end: ELECTION_END.toISOString(),
     database_connected: !!supabase,
     uptime: process.uptime()
