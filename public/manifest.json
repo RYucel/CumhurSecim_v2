@@ -1,0 +1,64 @@
+{
+  "name": "KKTC 2025 Cumhurbaşkanlığı Seçimi - Online Anket Sistemi",
+  "short_name": "KKTC Seçim 2025",
+  "description": "2025 KKTC Cumhurbaşkanlığı Seçimi için güvenli online anket platformu. Ersin Tatar, Tufan Erhürman ve Mehmet Hasgüler adayları için oy kullanın.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "tr",
+  "dir": "ltr",
+  "categories": ["politics", "voting", "survey", "government"],
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "16x16 32x32",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/Ersin_Tatar.jpg",
+      "sizes": "1200x630",
+      "type": "image/jpeg",
+      "platform": "wide",
+      "label": "KKTC 2025 Seçim Anketi Ana Sayfa"
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false,
+  "shortcuts": [
+    {
+      "name": "Oy Kullan",
+      "short_name": "Oyla",
+      "description": "Hızlı oy kullanma",
+      "url": "/#voting-section",
+      "icons": [
+        {
+          "src": "/favicon.ico",
+          "sizes": "32x32"
+        }
+      ]
+    },
+    {
+      "name": "Sonuçları Gör",
+      "short_name": "Sonuçlar",
+      "description": "Seçim sonuçlarını görüntüle",
+      "url": "/#results-section",
+      "icons": [
+        {
+          "src": "/favicon.ico",
+          "sizes": "32x32"
+        }
+      ]
+    }
+  ]
+}

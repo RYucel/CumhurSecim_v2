@@ -1,0 +1,42 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://cumhur-secim-v2-m4dyr7y7o-ryucels-projects.vercel.app/sitemap.xml
+
+# Crawl-delay for respectful crawling
+Crawl-delay: 1
+
+# Allow all search engines
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Slurp
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
+
+User-agent: Baiduspider
+Allow: /
+
+User-agent: YandexBot
+Allow: /
+
+# Block access to admin or sensitive areas (if any)
+# User-agent: *
+# Disallow: /admin/
+# Disallow: /api/
+
+# Allow images for better SEO
+User-agent: *
+Allow: /*.jpg$
+Allow: /*.jpeg$
+Allow: /*.png$
+Allow: /*.gif$
+Allow: /*.svg$
+Allow: /*.css$
+Allow: /*.js$
