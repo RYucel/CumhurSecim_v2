@@ -214,15 +214,15 @@ app.post('/api/vote', voteLimit, async (req, res) => {
         return res.status(409).json({ error: 'Bu cihazdan zaten oy kullanılmış' });
       }
 
-      // IP adresi kontrolü (aynı IP'den çok fazla oy önleme)
+      // IP adresi kontrolü (aynı IP'den çok fazla oy önleme - daha esnek limit)
       const { data: ipVotes } = await supabase
         .from('votes')
         .select('id')
         .eq('ip_address', clientIp);
 
-      if (ipVotes && ipVotes.length >= 3) {
+      if (ipVotes && ipVotes.length >= 10) {
         logVoteAttempt(clientIp, fingerprint, candidate, false, 'Too many votes from same IP');
-        return res.status(429).json({ error: 'Bu IP adresinden çok fazla oy kullanılmış' });
+        return res.status(429).json({ error: 'Bu IP adresinden çok fazla oy kullanılmış (maksimum 10 oy)' });
       }
 
       // Oy kaydet
@@ -248,24 +248,21 @@ app.post('/api/vote', voteLimit, async (req, res) => {
     } else {
       // Demo modu
       
-      // Fingerprint kontrolü
+      // Fingerprint kontrolü (sadece cihaz bazlı kontrol)
       if (demoFingerprints.has(fingerprint)) {
         logVoteAttempt(clientIp, fingerprint, candidate, false, 'Duplicate fingerprint (demo)');
         return res.status(409).json({ error: 'Bu cihazdan zaten oy kullanılmış' });
       }
       
-      // IP kontrolü
-      if (demoIpAddresses.has(clientIp)) {
-        logVoteAttempt(clientIp, fingerprint, candidate, false, 'Duplicate IP (demo)');
-        return res.status(429).json({ error: 'Bu IP adresinden zaten oy kullanılmış' });
-      }
+      // IP kontrolü kaldırıldı - aynı ağdan birden fazla kişi oy kullanabilir
+      // Sadece fingerprint (cihaz) kontrolü yapılıyor
       
       demoFingerprints.add(fingerprint);
-      demoIpAddresses.add(clientIp);
+      // demoIpAddresses.add(clientIp); // IP kontrolü kaldırıldı
       demoVotes[candidate]++;
       
       logVoteAttempt(clientIp, fingerprint, candidate, true, 'Vote recorded successfully (demo)');
-      console.log('Demo oy kaydedildi:', candidate, 'IP:', clientIp);
+      console.log('Demo oy kaydedildi:', candidate, 'IP:', clientIp, 'Fingerprint:', fingerprint.substring(0, 10) + '...');
     }
 
     res.json({ 

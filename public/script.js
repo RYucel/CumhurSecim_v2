@@ -29,23 +29,92 @@ function initializeApp() {
     initializeChart();
 }
 
-// Cihaz parmak izi oluştur
+// Cihaz parmak izi oluştur (gelişmiş algoritma)
 function generateFingerprint() {
+    // Canvas fingerprinting
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     ctx.textBaseline = 'top';
     ctx.font = '14px Arial';
-    ctx.fillText('KKTC Seçim 2025', 2, 2);
+    ctx.fillStyle = '#f60';
+    ctx.fillRect(125, 1, 62, 20);
+    ctx.fillStyle = '#069';
+    ctx.fillText('KKTC Seçim 2025 🗳️', 2, 2);
+    ctx.fillStyle = 'rgba(102, 204, 0, 0.7)';
+    ctx.fillText('Fingerprint Test', 4, 17);
     
-    const fingerprint = [
+    // WebGL fingerprinting
+    let webglInfo = '';
+    try {
+        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+        if (gl) {
+            const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+            if (debugInfo) {
+                webglInfo = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL) + '|' + 
+                           gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+            }
+        }
+    } catch (e) {
+        webglInfo = 'webgl_error';
+    }
+    
+    // Audio context fingerprinting
+    let audioFingerprint = '';
+    try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioCtx.createOscillator();
+        const analyser = audioCtx.createAnalyser();
+        const gainNode = audioCtx.createGain();
+        oscillator.connect(analyser);
+        analyser.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        audioFingerprint = audioCtx.sampleRate + '|' + audioCtx.state;
+        audioCtx.close();
+    } catch (e) {
+        audioFingerprint = 'audio_error';
+    }
+    
+    // Gelişmiş cihaz bilgileri
+    const deviceInfo = [
         navigator.userAgent,
         navigator.language,
+        navigator.languages ? navigator.languages.join(',') : '',
+        navigator.platform,
+        navigator.cookieEnabled,
+        navigator.doNotTrack,
+        navigator.hardwareConcurrency || 'unknown',
+        navigator.maxTouchPoints || 0,
         screen.width + 'x' + screen.height,
+        screen.colorDepth,
+        screen.pixelDepth,
+        window.devicePixelRatio || 1,
         new Date().getTimezoneOffset(),
-        canvas.toDataURL()
+        Intl.DateTimeFormat().resolvedOptions().timeZone || 'unknown',
+        window.innerWidth + 'x' + window.innerHeight,
+        document.documentElement.clientWidth + 'x' + document.documentElement.clientHeight,
+        canvas.toDataURL(),
+        webglInfo,
+        audioFingerprint,
+        // Ek güvenlik için rastgele bir bileşen (session bazlı)
+        sessionStorage.getItem('fp_session') || (function() {
+            const session = Math.random().toString(36).substring(2, 15);
+            sessionStorage.setItem('fp_session', session);
+            return session;
+        })()
     ].join('|');
     
-    userFingerprint = btoa(fingerprint).substring(0, 32);
+    // SHA-256 benzeri hash oluştur
+    let hash = 0;
+    for (let i = 0; i < deviceInfo.length; i++) {
+        const char = deviceInfo.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // 32bit integer'a çevir
+    }
+    
+    userFingerprint = Math.abs(hash).toString(36) + btoa(deviceInfo).substring(0, 16);
+    userFingerprint = userFingerprint.substring(0, 40); // 40 karakter limit
+    
+    console.log('Generated fingerprint:', userFingerprint.substring(0, 10) + '...');
     
     // Local storage'da kontrol et
     const votedKey = 'kktc_voted_' + userFingerprint;
