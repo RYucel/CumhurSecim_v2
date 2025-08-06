@@ -273,11 +273,9 @@ app.post('/api/vote', voteLimit, async (req, res) => {
         return res.status(409).json({ error: 'Bu cihazdan zaten oy kullanılmış' });
       }
 
-      // Fallback fingerprint özel kontrolü (incognito mod)
+      // Fallback fingerprint özel kontrolü (incognito mod) - Sıkılaştırılmış
       if (isFallbackFingerprint(fingerprint)) {
-        const fallbackBase = getFallbackBase(fingerprint);
-        
-        // Sadece aynı IP'den gelen fallback fingerprint'leri kontrol et
+        // Aynı IP'den herhangi bir fallback fingerprint varsa engelle
         const { data: fallbackVotes } = await supabase
           .from('votes')
           .select('fingerprint, ip_address')
@@ -285,17 +283,10 @@ app.post('/api/vote', voteLimit, async (req, res) => {
           .like('fingerprint', 'fallback_%');
 
         if (fallbackVotes && fallbackVotes.length > 0) {
-          const sameFallbackFromSameIp = fallbackVotes.find(vote => {
-            const voteBase = getFallbackBase(vote.fingerprint);
-            return voteBase === fallbackBase;
+          logVoteAttempt(clientIp, fingerprint, candidate, false, 'Fallback fingerprint - aynı IP\'den zaten fallback oy var');
+          return res.status(409).json({ 
+            error: 'Bu ağ bağlantısından zaten incognito/gizli modda oy kullanılmış. Her IP adresinden sadece bir fallback oy kabul edilir.' 
           });
-          
-          if (sameFallbackFromSameIp) {
-            logVoteAttempt(clientIp, fingerprint, candidate, false, 'Fallback fingerprint - aynı IP\'den incognito mod tespit edildi');
-            return res.status(409).json({ 
-              error: 'Incognito/gizli mod kullanarak tekrar oy verme tespit edildi! (Fallback sistem)' 
-            });
-          }
         }
       }
 
@@ -356,21 +347,18 @@ app.post('/api/vote', voteLimit, async (req, res) => {
         return res.status(409).json({ error: 'Bu cihazdan zaten oy kullanılmış. Her cihaz sadece bir kez oy kullanabilir.' });
       }
       
-      // Fallback fingerprint özel kontrolü (demo modunda incognito)
+      // Fallback fingerprint özel kontrolü (demo modunda incognito) - Sıkılaştırılmış
       if (isFallbackFingerprint(fingerprint)) {
-        const fallbackBase = getFallbackBase(fingerprint);
+        // Demo modunda aynı IP'den herhangi bir fallback fingerprint varsa engelle
+        const ipFallbackExists = demoVoteHistory.some(vote => 
+          vote.ip_address === clientIp && isFallbackFingerprint(vote.fingerprint)
+        );
         
-        // Demo modunda kayıtlı fallback fingerprint'leri kontrol et
-        for (const existingFingerprint of demoFingerprints) {
-          if (isFallbackFingerprint(existingFingerprint)) {
-            const existingBase = getFallbackBase(existingFingerprint);
-            if (existingBase === fallbackBase) {
-              logVoteAttempt(clientIp, fingerprint, candidate, false, 'Demo: Fallback fingerprint - incognito mod tespit edildi');
-              return res.status(409).json({ 
-                error: 'Incognito/gizli mod kullanarak tekrar oy verme tespit edildi! (Demo - Fallback sistem)' 
-              });
-            }
-          }
+        if (ipFallbackExists) {
+          logVoteAttempt(clientIp, fingerprint, candidate, false, 'Demo: Fallback fingerprint - aynı IP\'den zaten fallback oy var');
+          return res.status(409).json({ 
+            error: 'Bu ağ bağlantısından zaten incognito/gizli modda oy kullanılmış. Her IP adresinden sadece bir fallback oy kabul edilir.' 
+          });
         }
       }
       
