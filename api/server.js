@@ -14,15 +14,23 @@ const supabaseKey = process.env.SUPABASE_ANON_KEY;
 let supabase = null;
 
 // Supabase bağlantısını kontrol et
+console.log('Environment check:');
+console.log('SUPABASE_URL:', supabaseUrl ? 'SET' : 'NOT SET');
+console.log('SUPABASE_ANON_KEY:', supabaseKey ? 'SET' : 'NOT SET');
+console.log('NODE_ENV:', process.env.NODE_ENV);
+
 if (supabaseUrl && supabaseKey && supabaseUrl !== 'your_supabase_project_url_here') {
     try {
         supabase = createClient(supabaseUrl, supabaseKey);
-        console.log('Supabase bağlantısı kuruldu');
+        console.log('Supabase bağlantısı kuruldu:', supabaseUrl.substring(0, 30) + '...');
     } catch (error) {
-        console.warn('Supabase bağlantısı kurulamadı:', error.message);
+        console.error('Supabase bağlantısı kurulamadı:', error.message);
+        console.error('Error details:', error);
     }
 } else {
     console.warn('Supabase yapılandırması bulunamadı. Demo modunda çalışıyor.');
+    console.warn('URL:', supabaseUrl || 'undefined');
+    console.warn('KEY:', supabaseKey ? 'defined' : 'undefined');
 }
 
 // Demo verileri (Supabase olmadan test için)
@@ -239,9 +247,13 @@ app.post('/api/vote', voteLimit, async (req, res) => {
         ]);
 
       if (error) {
-        console.error('Supabase error:', error);
-        logVoteAttempt(clientIp, fingerprint, candidate, false, 'Database error');
-        return res.status(500).json({ error: 'Oy kaydedilemedi' });
+        console.error('Supabase insert error:', error);
+        console.error('Error code:', error.code);
+        console.error('Error message:', error.message);
+        console.error('Error details:', error.details);
+        console.error('Error hint:', error.hint);
+        logVoteAttempt(clientIp, fingerprint, candidate, false, 'Database error: ' + error.message);
+        return res.status(500).json({ error: 'Oy kaydedilemedi: ' + error.message });
       }
 
       logVoteAttempt(clientIp, fingerprint, candidate, true, 'Vote recorded successfully');
