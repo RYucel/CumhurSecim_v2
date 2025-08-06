@@ -350,10 +350,12 @@ function disableVoting(message) {
 // Sonuçları yükle
 async function loadResults() {
     try {
+        console.log('Sonuçlar yükleniyor...');
         const response = await fetch('/api/results');
         const data = await response.json();
         
         if (response.ok) {
+            console.log('API\'den gelen sonuçlar:', data);
             updateResults(data);
         } else {
             console.error('Results error:', data.error);
@@ -366,6 +368,7 @@ async function loadResults() {
 
 // Sonuçları güncelle
 function updateResults(data) {
+    console.log('updateResults çağrıldı, veri:', data);
     const { votes, percentages } = data;
     
     // Toplam oy sayısını güncelle
@@ -383,6 +386,7 @@ function updateResults(data) {
     updateResultsTab(data);
     
     // Grafiği güncelle
+    console.log('Chart güncelleme çağrılıyor...');
     updateChart(data);
 }
 
@@ -449,11 +453,10 @@ function updateSimpleChart(data) {
 
 // Grafiği güncelle
 function updateChart(data) {
-    // API'den gelen veri formatını chart için uygun formata çevir
-    const chartData = {
-        votes: data.votes // API'den gelen votes objesi direkt kullanılabilir
-    };
-    updateSimpleChart(chartData);
+    console.log('Chart güncelleniyor, gelen veri:', data);
+    // API'den gelen veri formatı: { votes: {...}, percentages: {...} }
+    // updateSimpleChart sadece votes objesini bekliyor
+    updateSimpleChart(data); // data zaten doğru formatta: { votes: {...} }
 }
 
 // Geri sayım sayacını başlat
