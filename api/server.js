@@ -43,6 +43,10 @@ let demoFingerprints = new Set();
 let demoIpAddresses = new Set();
 let demoVoteLog = [];
 
+// Incognito mod koruması için çok katmanlı kontrol
+let deviceSignatures = new Map(); // IP + UserAgent + Fingerprint kombinasyonları
+let ipVoteCounts = new Map(); // IP başına oy sayısı (incognito koruması)
+
 // Seçim zamanı kısıtlamaları
 // KKTC Cumhurbaşkanlığı Seçimi: Anket amaçlı süresiz oy verme
 const ELECTION_END = new Date('2025-12-31T23:59:59+03:00');   // 31 Aralık 2025, 23:59 (UTC+3)
@@ -222,8 +226,23 @@ app.post('/api/vote', voteLimit, async (req, res) => {
         return res.status(409).json({ error: 'Bu cihazdan zaten oy kullanılmış' });
       }
 
-      // IP kontrolü kaldırıldı - Sadece fingerprint (cihaz) kontrolü yapılıyor
-      // Vercel'de aynı IP'den çok fazla istek sorunu nedeniyle IP kontrolü devre dışı
+      // Incognito mod koruması: IP + User-Agent kombinasyonu kontrolü
+      const userAgent = req.get('User-Agent') || '';
+      const deviceSignature = `${clientIp}|${userAgent.substring(0, 100)}`;
+      
+      const { data: existingIpUserAgentVote } = await supabase
+        .from('votes')
+        .select('id, created_at, fingerprint')
+        .eq('ip_address', clientIp)
+        .ilike('user_agent', userAgent.substring(0, 50) + '%')
+        .single();
+
+      if (existingIpUserAgentVote && existingIpUserAgentVote.fingerprint !== fingerprint) {
+        logVoteAttempt(clientIp, fingerprint, candidate, false, 'Possible incognito mode detected');
+        return res.status(409).json({ 
+          error: 'Bu ağ bağlantısından ve tarayıcıdan zaten oy kullanılmış. Incognito/gizli mod kullanımı tespit edildi.' 
+        });
+      }
 
       // Oy kaydet
       const { data, error } = await supabase
@@ -258,11 +277,35 @@ app.post('/api/vote', voteLimit, async (req, res) => {
         return res.status(409).json({ error: 'Bu cihazdan zaten oy kullanılmış. Her cihaz sadece bir kez oy kullanabilir.' });
       }
       
-      // IP kontrolü kaldırıldı - aynı ağdan birden fazla kişi oy kullanabilir
-      // Sadece güçlendirilmiş fingerprint (cihaz) kontrolü yapılıyor
+      // Incognito mod koruması: IP + User-Agent kombinasyonu kontrolü
+      const userAgent = req.get('User-Agent') || '';
+      const deviceSignature = `${clientIp}|${userAgent.substring(0, 100)}`;
       
+      // Aynı IP ve User-Agent'tan farklı fingerprint ile oy kontrolü
+      for (const [signature, storedFingerprint] of deviceSignatures.entries()) {
+        if (signature.startsWith(clientIp + '|') && 
+            signature.includes(userAgent.substring(0, 50)) && 
+            storedFingerprint !== fingerprint) {
+          logVoteAttempt(clientIp, fingerprint, candidate, false, 'Possible incognito mode detected (demo)');
+          return res.status(409).json({ 
+            error: 'Bu ağ bağlantısından ve tarayıcıdan zaten oy kullanılmış. Incognito/gizli mod kullanımı tespit edildi.' 
+          });
+        }
+      }
+      
+      // IP başına maksimum oy sayısı kontrolü (incognito koruması)
+      const currentIpVotes = ipVoteCounts.get(clientIp) || 0;
+      if (currentIpVotes >= 3) { // Aynı IP'den maksimum 3 oy
+        logVoteAttempt(clientIp, fingerprint, candidate, false, 'IP vote limit exceeded (demo)');
+        return res.status(409).json({ 
+          error: 'Bu ağ bağlantısından çok fazla oy kullanılmış. Lütfen farklı bir ağ bağlantısı kullanın.' 
+        });
+      }
+      
+      // Kayıtları güncelle
       demoFingerprints.add(fingerprint);
-      // demoIpAddresses.add(clientIp); // IP kontrolü kaldırıldı
+      deviceSignatures.set(deviceSignature, fingerprint);
+      ipVoteCounts.set(clientIp, currentIpVotes + 1);
       demoVotes[candidate]++;
       
       logVoteAttempt(clientIp, fingerprint, candidate, true, 'Vote recorded successfully (demo)');
