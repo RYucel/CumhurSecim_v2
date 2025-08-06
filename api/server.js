@@ -247,20 +247,21 @@ app.post('/api/vote', voteLimit, async (req, res) => {
       if (isFallbackFingerprint(fingerprint)) {
         const fallbackBase = getFallbackBase(fingerprint);
         
-        // Aynı base'e sahip fallback fingerprint'leri kontrol et
+        // Sadece aynı IP'den gelen fallback fingerprint'leri kontrol et
         const { data: fallbackVotes } = await supabase
           .from('votes')
           .select('fingerprint, ip_address')
+          .eq('ip_address', clientIp)
           .like('fingerprint', 'fallback_%');
 
         if (fallbackVotes && fallbackVotes.length > 0) {
-          const sameFallbackBase = fallbackVotes.find(vote => {
+          const sameFallbackFromSameIp = fallbackVotes.find(vote => {
             const voteBase = getFallbackBase(vote.fingerprint);
-            return voteBase === fallbackBase || vote.ip_address === clientIp;
+            return voteBase === fallbackBase;
           });
           
-          if (sameFallbackBase) {
-            logVoteAttempt(clientIp, fingerprint, candidate, false, 'Fallback fingerprint - incognito mod tespit edildi');
+          if (sameFallbackFromSameIp) {
+            logVoteAttempt(clientIp, fingerprint, candidate, false, 'Fallback fingerprint - aynı IP\'den incognito mod tespit edildi');
             return res.status(409).json({ 
               error: 'Incognito/gizli mod kullanarak tekrar oy verme tespit edildi! (Fallback sistem)' 
             });
