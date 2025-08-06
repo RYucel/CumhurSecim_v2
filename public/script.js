@@ -4,19 +4,21 @@ let userFingerprint = null;
 let hasVoted = false;
 let resultsChart = null;
 
+// Chart.js yüklenmesini bekle
+function waitForChart() {
+    if (typeof Chart !== 'undefined') {
+        console.log('Chart.js başarıyla yüklendi!');
+        initializeApp();
+    } else {
+        console.log('Chart.js bekleniyor...');
+        setTimeout(waitForChart, 100);
+    }
+}
+
 // Uygulama başlatma
 window.addEventListener('load', function() {
-    console.log('Window loaded, Chart.js durumu:', typeof Chart !== 'undefined');
-    // Chart.js'in yüklenmesini bekle
-    if (typeof Chart === 'undefined') {
-        console.error('Chart.js yüklenmedi!');
-        setTimeout(function() {
-            console.log('Timeout sonrası Chart.js durumu:', typeof Chart !== 'undefined');
-            initializeApp();
-        }, 2000);
-    } else {
-        initializeApp();
-    }
+    console.log('Window loaded, Chart.js kontrol ediliyor...');
+    waitForChart();
 });
 
 // Uygulamayı başlat
