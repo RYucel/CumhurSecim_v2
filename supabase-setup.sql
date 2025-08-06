@@ -55,23 +55,23 @@ CREATE POLICY "Allow log reading" ON vote_logs
 
 -- 6. Güvenlik fonksiyonları
 
--- IP başına maksimum oy sayısını kontrol eden fonksiyon
-CREATE OR REPLACE FUNCTION check_ip_vote_limit()
-RETURNS TRIGGER AS $$
-BEGIN
-    IF (SELECT COUNT(*) FROM votes WHERE ip_address = NEW.ip_address) >= 3 THEN
-        RAISE EXCEPTION 'Bu IP adresinden çok fazla oy kullanılmış';
-    END IF;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
+-- IP kontrolü kaldırıldı - Vercel uyumluluğu için
+-- CREATE OR REPLACE FUNCTION check_ip_vote_limit()
+-- RETURNS TRIGGER AS $$
+-- BEGIN
+--     IF (SELECT COUNT(*) FROM votes WHERE ip_address = NEW.ip_address) >= 3 THEN
+--         RAISE EXCEPTION 'Bu IP adresinden çok fazla oy kullanılmış';
+--     END IF;
+--     RETURN NEW;
+-- END;
+-- $$ LANGUAGE plpgsql;
 
--- Trigger oluştur
+-- Trigger kaldırıldı
 DROP TRIGGER IF EXISTS check_ip_limit_trigger ON votes;
-CREATE TRIGGER check_ip_limit_trigger
-    BEFORE INSERT ON votes
-    FOR EACH ROW
-    EXECUTE FUNCTION check_ip_vote_limit();
+-- CREATE TRIGGER check_ip_limit_trigger
+--     BEFORE INSERT ON votes
+--     FOR EACH ROW
+--     EXECUTE FUNCTION check_ip_vote_limit();
 
 -- 7. Seçim zamanı kontrolü fonksiyonu
 CREATE OR REPLACE FUNCTION check_election_time()
