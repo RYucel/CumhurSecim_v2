@@ -259,20 +259,8 @@ app.post('/api/vote', voteLimit, async (req, res) => {
     }
 
     if (supabase) {
-      // Supabase ile çalış
+      // Supabase ile çalış - Atomik işlem (Race Condition koruması)
       
-      // Fingerprint kontrolü
-      const { data: existingFingerprintVote } = await supabase
-        .from('votes')
-        .select('id, created_at')
-        .eq('fingerprint', fingerprint)
-        .single();
-
-      if (existingFingerprintVote) {
-        logVoteAttempt(clientIp, fingerprint, candidate, false, 'Duplicate fingerprint');
-        return res.status(409).json({ error: 'Bu cihazdan zaten oy kullanılmış' });
-      }
-
       // Fallback fingerprint özel kontrolü (incognito mod) - Sıkılaştırılmış
       if (isFallbackFingerprint(fingerprint)) {
         // Aynı IP'den herhangi bir fallback fingerprint varsa engelle
@@ -314,7 +302,7 @@ app.post('/api/vote', voteLimit, async (req, res) => {
         }
       }
 
-      // Oy kaydet
+      // Atomik oy kaydetme - Doğrudan insert yap, hata alırsan duplicate demektir
       const { data, error } = await supabase
         .from('votes')
         .insert([
@@ -331,6 +319,14 @@ app.post('/api/vote', voteLimit, async (req, res) => {
         console.error('Supabase insert error:', error);
         console.error('Error code:', error.code);
         console.error('Error message:', error.message);
+        
+        // PostgreSQL unique constraint hatası (23505) - Duplicate fingerprint
+        if (error.code === '23505' && error.message.includes('votes_fingerprint_unique')) {
+          logVoteAttempt(clientIp, fingerprint, candidate, false, 'Duplicate fingerprint (race condition prevented)');
+          return res.status(409).json({ error: 'Bu cihazdan zaten oy kullanılmış' });
+        }
+        
+        // Diğer veritabanı hataları
         console.error('Error details:', error.details);
         console.error('Error hint:', error.hint);
         logVoteAttempt(clientIp, fingerprint, candidate, false, 'Database error: ' + error.message);
@@ -339,9 +335,9 @@ app.post('/api/vote', voteLimit, async (req, res) => {
 
       logVoteAttempt(clientIp, fingerprint, candidate, true, 'Vote recorded successfully');
     } else {
-      // Demo modu
+      // Demo modu - Atomik işlem (Race Condition koruması)
       
-      // Güçlendirilmiş fingerprint kontrolü (sadece cihaz bazlı kontrol)
+      // Atomik fingerprint kontrolü - Önce kaydetmeye çalış, duplicate varsa hata ver
       if (demoFingerprints.has(fingerprint)) {
         logVoteAttempt(clientIp, fingerprint, candidate, false, 'Bu cihazdan zaten oy kullanılmış (demo)');
         return res.status(409).json({ error: 'Bu cihazdan zaten oy kullanılmış. Her cihaz sadece bir kez oy kullanabilir.' });
@@ -402,23 +398,37 @@ app.post('/api/vote', voteLimit, async (req, res) => {
         });
       }
       
-      // Kayıtları güncelle
-      demoFingerprints.add(fingerprint);
-      deviceSignatures.set(deviceSignature, fingerprint);
-      ipVoteCounts.set(clientIp, currentIpVotes + 1);
-      demoVotes[candidate]++;
-      
-      // Zaman damgalı oy geçmişine ekle (demo modu)
-      demoVoteHistory.push({
-        timestamp: new Date().toISOString(),
-        ip_address: clientIp,
-        fingerprint: fingerprint,
-        candidate: candidate
-      });
-      
-      // Son 1000 oy geçmişini tut (bellek yönetimi)
-      if (demoVoteHistory.length > 1000) {
-        demoVoteHistory = demoVoteHistory.slice(-1000);
+      // Atomik kayıt işlemi - Tüm değişiklikleri tek seferde yap (Race Condition koruması)
+      // Bu noktada tüm kontroller geçildi, artık güvenle kaydedebiliriz
+      try {
+        // Tekrar kontrol et (double-check locking pattern)
+        if (demoFingerprints.has(fingerprint)) {
+          logVoteAttempt(clientIp, fingerprint, candidate, false, 'Race condition detected - duplicate fingerprint (demo)');
+          return res.status(409).json({ error: 'Bu cihazdan zaten oy kullanılmış. Her cihaz sadece bir kez oy kullanabilir.' });
+        }
+        
+        // Atomik güncelleme
+        demoFingerprints.add(fingerprint);
+        deviceSignatures.set(deviceSignature, fingerprint);
+        ipVoteCounts.set(clientIp, currentIpVotes + 1);
+        demoVotes[candidate]++;
+        
+        // Zaman damgalı oy geçmişine ekle (demo modu)
+        demoVoteHistory.push({
+          timestamp: new Date().toISOString(),
+          ip_address: clientIp,
+          fingerprint: fingerprint,
+          candidate: candidate
+        });
+        
+        // Son 1000 oy geçmişini tut (bellek yönetimi)
+        if (demoVoteHistory.length > 1000) {
+          demoVoteHistory = demoVoteHistory.slice(-1000);
+        }
+      } catch (atomicError) {
+        console.error('Demo atomic operation error:', atomicError);
+        logVoteAttempt(clientIp, fingerprint, candidate, false, 'Atomic operation failed (demo)');
+        return res.status(500).json({ error: 'Oy kaydedilemedi' });
       }
       
       logVoteAttempt(clientIp, fingerprint, candidate, true, 'Vote recorded successfully (demo)');
