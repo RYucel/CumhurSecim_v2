@@ -8,6 +8,9 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Trust proxy ayarı - gerçek IP adresini almak için
+app.set('trust proxy', true);
+
 // Supabase yapılandırması
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_ANON_KEY;
@@ -100,8 +103,33 @@ function getFallbackBase(fingerprint) {
 
 // Input sanitization fonksiyonu
 function sanitizeInput(input) {
-    if (typeof input !== 'string') return '';
-    return input.replace(/[<>"'&]/g, '').trim().substring(0, 100);
+  if (typeof input !== 'string') return '';
+  return input.replace(/[<>"'&]/g, '').substring(0, 100);
+}
+
+// Gerçek IP adresini almak için fonksiyon
+function getRealIpAddress(req) {
+  // Proxy header'larını kontrol et
+  const forwarded = req.headers['x-forwarded-for'];
+  const realIp = req.headers['x-real-ip'];
+  const cfConnectingIp = req.headers['cf-connecting-ip']; // Cloudflare
+  
+  if (forwarded) {
+    // X-Forwarded-For birden fazla IP içerebilir, ilkini al
+    const ips = forwarded.split(',').map(ip => ip.trim());
+    return ips[0];
+  }
+  
+  if (realIp) {
+    return realIp;
+  }
+  
+  if (cfConnectingIp) {
+    return cfConnectingIp;
+  }
+  
+  // Express.js'in IP'si (trust proxy ile)
+  return req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 'unknown';
 }
 
 function logVoteAttempt(ip, fingerprint, candidate, success, reason = '') {
@@ -161,10 +189,11 @@ const voteLimit = rateLimit({
   legacyHeaders: false,
   keyGenerator: (req) => {
     // IP + User-Agent kombinasyonu ile daha güvenli tracking
-    return req.ip + ':' + (req.get('User-Agent') || '').substring(0, 50);
+    const realIp = getRealIpAddress(req);
+    return realIp + ':' + (req.get('User-Agent') || '').substring(0, 50);
   },
   handler: (req, res) => {
-    const clientIp = req.ip || req.connection.remoteAddress;
+    const clientIp = getRealIpAddress(req);
     logVoteAttempt(clientIp, 'rate-limited', 'unknown', false, 'Rate limit exceeded');
     res.status(429).json({ error: 'Çok fazla oy verme denemesi. 1 dakika bekleyin.' });
   }
@@ -188,7 +217,7 @@ app.get('/', (req, res) => {
 app.post('/api/vote', voteLimit, async (req, res) => {
   try {
     let { candidate, fingerprint } = req.body;
-    const clientIp = req.ip || req.connection.remoteAddress;
+    const clientIp = getRealIpAddress(req);
     
     // Input sanitization
     candidate = sanitizeInput(candidate);
@@ -269,22 +298,24 @@ app.post('/api/vote', voteLimit, async (req, res) => {
         }
       }
 
-      // Incognito mod koruması: IP + User-Agent kombinasyonu kontrolü
+      // Gelişmiş incognito mod koruması: Sadece aşırı şüpheli durumları engelle
       const userAgent = req.get('User-Agent') || '';
-      const deviceSignature = `${clientIp}|${userAgent.substring(0, 100)}`;
       
-      const { data: existingIpUserAgentVote } = await supabase
+      // Aynı IP'den çok fazla farklı fingerprint gelirse şüpheli
+      const { data: ipVotes } = await supabase
         .from('votes')
-        .select('id, created_at, fingerprint')
-        .eq('ip_address', clientIp)
-        .ilike('user_agent', userAgent.substring(0, 50) + '%')
-        .single();
-
-      if (existingIpUserAgentVote && existingIpUserAgentVote.fingerprint !== fingerprint) {
-        logVoteAttempt(clientIp, fingerprint, candidate, false, 'Possible incognito mode detected');
-        return res.status(409).json({ 
-          error: 'Bu ağ bağlantısından ve tarayıcıdan zaten oy kullanılmış. Incognito/gizli mod kullanımı tespit edildi.' 
-        });
+        .select('fingerprint')
+        .eq('ip_address', clientIp);
+      
+      if (ipVotes && ipVotes.length >= 3) {
+        // Aynı IP'den 3'ten fazla farklı fingerprint varsa şüpheli
+        const uniqueFingerprints = new Set(ipVotes.map(v => v.fingerprint));
+        if (uniqueFingerprints.size >= 3 && !uniqueFingerprints.has(fingerprint)) {
+          logVoteAttempt(clientIp, fingerprint, candidate, false, 'Çok fazla farklı fingerprint aynı IP\'den');
+          return res.status(409).json({ 
+            error: 'Bu IP adresinden çok fazla farklı cihaz tespit edildi. Güvenlik nedeniyle engellenmiştir.' 
+          });
+        }
       }
 
       // Oy kaydet
