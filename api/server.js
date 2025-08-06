@@ -222,16 +222,8 @@ app.post('/api/vote', voteLimit, async (req, res) => {
         return res.status(409).json({ error: 'Bu cihazdan zaten oy kullanılmış' });
       }
 
-      // IP adresi kontrolü (aynı IP'den çok fazla oy önleme - daha esnek limit)
-      const { data: ipVotes } = await supabase
-        .from('votes')
-        .select('id')
-        .eq('ip_address', clientIp);
-
-      if (ipVotes && ipVotes.length >= 10) {
-        logVoteAttempt(clientIp, fingerprint, candidate, false, 'Too many votes from same IP');
-        return res.status(429).json({ error: 'Bu IP adresinden çok fazla oy kullanılmış (maksimum 10 oy)' });
-      }
+      // IP kontrolü kaldırıldı - Sadece fingerprint (cihaz) kontrolü yapılıyor
+      // Vercel'de aynı IP'den çok fazla istek sorunu nedeniyle IP kontrolü devre dışı
 
       // Oy kaydet
       const { data, error } = await supabase
