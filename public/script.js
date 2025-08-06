@@ -95,12 +95,10 @@ function generateFingerprint() {
         canvas.toDataURL(),
         webglInfo,
         audioFingerprint,
-        // Ek güvenlik için rastgele bir bileşen (session bazlı)
-        sessionStorage.getItem('fp_session') || (function() {
-            const session = Math.random().toString(36).substring(2, 15);
-            sessionStorage.setItem('fp_session', session);
-            return session;
-        })()
+        // Sabit cihaz özellikleri (rastgele değerler kaldırıldı)
+        (window.localStorage && localStorage.length) || 0,
+        (window.sessionStorage && sessionStorage.length) || 0,
+        navigator.plugins ? navigator.plugins.length : 0
     ].join('|');
     
     // SHA-256 benzeri hash oluştur

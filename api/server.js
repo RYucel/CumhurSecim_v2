@@ -286,7 +286,7 @@ app.get('/api/admin/logs', async (req, res) => {
     const ADMIN_KEY = process.env.ADMIN_KEY;
     
     // Admin key yoksa veya boşsa erişimi reddet
-    if (!ADMIN_KEY || ADMIN_KEY === 'admin123' || ADMIN_KEY.length < 20) {
+    if (!ADMIN_KEY || ADMIN_KEY === 'admin123' || ADMIN_KEY.length < 10) {
       return res.status(503).json({ error: 'Admin paneli yapılandırılmamış' });
     }
     if (auth_key !== ADMIN_KEY) {
