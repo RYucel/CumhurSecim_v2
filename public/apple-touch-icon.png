@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="180" height="180" viewBox="0 0 180 180">
+  <rect width="180" height="180" fill="#1e40af" rx="20"/>
+  <circle cx="90" cy="70" r="25" fill="white"/>
+  <rect x="65" y="100" width="50" height="60" fill="white" rx="5"/>
+  <text x="90" y="140" text-anchor="middle" fill="#1e40af" font-family="Arial, sans-serif" font-size="12" font-weight="bold">KKTC</text>
+  <text x="90" y="155" text-anchor="middle" fill="#1e40af" font-family="Arial, sans-serif" font-size="10">2025</text>
+</svg>
