@@ -117,11 +117,23 @@ function generateFingerprint() {
     console.log('Generated fingerprint:', userFingerprint.substring(0, 10) + '...');
     
     // Local storage'da kontrol et
-    const votedKey = 'kktc_voted_' + userFingerprint;
-    hasVoted = localStorage.getItem(votedKey) === 'true';
+    // Yerel storage'dan oy durumunu kontrol et
+    const hasVotedLocally = localStorage.getItem('hasVoted');
+    const votedFingerprint = localStorage.getItem('votedFingerprint');
     
-    if (hasVoted) {
-        disableVoting('Bu cihazdan zaten oy kullanılmış');
+    if (hasVotedLocally === 'true' && votedFingerprint === userFingerprint) {
+        hasVoted = true;
+        disableVoting('Bu cihazdan zaten oy kullanılmış. Her cihaz sadece bir kez oy kullanabilir.');
+    }
+    
+    // Eski sistem ile uyumluluk için
+    const votedKey = 'kktc_voted_' + userFingerprint;
+    if (localStorage.getItem(votedKey) === 'true') {
+        hasVoted = true;
+        disableVoting('Bu cihazdan zaten oy kullanılmış. Her cihaz sadece bir kez oy kullanabilir.');
+        // Yeni sisteme geçiş
+        localStorage.setItem('hasVoted', 'true');
+        localStorage.setItem('votedFingerprint', userFingerprint);
     }
 }
 
@@ -250,8 +262,18 @@ async function submitVote() {
             localStorage.setItem('kktc_voted_' + userFingerprint, 'true');
             hasVoted = true;
             
+            // Yerel storage'a oy kullanım bilgisini kaydet
+            localStorage.setItem('hasVoted', 'true');
+            localStorage.setItem('votedFingerprint', userFingerprint);
+            localStorage.setItem('votedCandidate', selectedCandidate);
+            localStorage.setItem('voteTimestamp', new Date().toISOString());
+            
+            // Eski sistem ile uyumluluk için
+            const votedKey = 'kktc_voted_' + userFingerprint;
+            localStorage.setItem(votedKey, 'true');
+            
             showMessage('Oyunuz başarıyla kaydedildi!', 'success');
-            disableVoting('Oyunuz kaydedildi');
+            disableVoting('Bu cihazdan zaten oy kullanılmış. Her cihaz sadece bir kez oy kullanabilir.');
             loadResults(); // Sonuçları güncelle
             
             // Oy verdikten sonra sonuçlar sekmesine geç
@@ -275,8 +297,14 @@ async function submitVote() {
 
 // Oylama durumunu kontrol et
 async function checkVoteStatus() {
-    // Local storage kontrolü zaten generateFingerprint'te yapılıyor
-    // Ek server-side kontrol burada yapılabilir
+    // Yerel storage'dan oy durumunu kontrol et
+    const hasVotedLocally = localStorage.getItem('hasVoted');
+    const votedFingerprint = localStorage.getItem('votedFingerprint');
+    
+    if (hasVotedLocally === 'true' && votedFingerprint === userFingerprint) {
+        disableVoting('Bu cihazdan zaten oy kullanılmış. Her cihaz sadece bir kez oy kullanabilir.');
+        hasVoted = true;
+    }
 }
 
 // Oylamayı devre dışı bırak
@@ -398,7 +426,11 @@ function updateSimpleChart(data) {
 
 // Grafiği güncelle
 function updateChart(data) {
-    updateSimpleChart(data);
+    // API'den gelen veri formatını chart için uygun formata çevir
+    const chartData = {
+        votes: data.votes // API'den gelen votes objesi direkt kullanılabilir
+    };
+    updateSimpleChart(chartData);
 }
 
 // Geri sayım sayacını başlat

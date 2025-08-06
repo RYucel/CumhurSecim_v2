@@ -252,14 +252,14 @@ app.post('/api/vote', voteLimit, async (req, res) => {
     } else {
       // Demo modu
       
-      // Fingerprint kontrolü (sadece cihaz bazlı kontrol)
+      // Güçlendirilmiş fingerprint kontrolü (sadece cihaz bazlı kontrol)
       if (demoFingerprints.has(fingerprint)) {
-        logVoteAttempt(clientIp, fingerprint, candidate, false, 'Duplicate fingerprint (demo)');
-        return res.status(409).json({ error: 'Bu cihazdan zaten oy kullanılmış' });
+        logVoteAttempt(clientIp, fingerprint, candidate, false, 'Bu cihazdan zaten oy kullanılmış (demo)');
+        return res.status(409).json({ error: 'Bu cihazdan zaten oy kullanılmış. Her cihaz sadece bir kez oy kullanabilir.' });
       }
       
       // IP kontrolü kaldırıldı - aynı ağdan birden fazla kişi oy kullanabilir
-      // Sadece fingerprint (cihaz) kontrolü yapılıyor
+      // Sadece güçlendirilmiş fingerprint (cihaz) kontrolü yapılıyor
       
       demoFingerprints.add(fingerprint);
       // demoIpAddresses.add(clientIp); // IP kontrolü kaldırıldı
