@@ -45,6 +45,7 @@ let demoVotes = {
 let demoFingerprints = new Set();
 let demoIpAddresses = new Set();
 let demoVoteLog = [];
+let demoVoteHistory = []; // Zaman damgalı oy geçmişi (demo modu için)
 
 // Incognito mod koruması için çok katmanlı kontrol
 let deviceSignatures = new Map(); // IP + UserAgent + Fingerprint kombinasyonları
@@ -304,16 +305,20 @@ app.post('/api/vote', voteLimit, async (req, res) => {
       // Aynı IP'den çok fazla farklı fingerprint gelirse şüpheli
       const { data: ipVotes } = await supabase
         .from('votes')
-        .select('fingerprint')
+        .select('fingerprint, created_at') // created_at zamanını da al
         .eq('ip_address', clientIp);
       
-      if (ipVotes && ipVotes.length >= 3) {
-        // Aynı IP'den 3'ten fazla farklı fingerprint varsa şüpheli
+      if (ipVotes && ipVotes.length >= 10) { // Limiti 3'ten 10'a yükselt
         const uniqueFingerprints = new Set(ipVotes.map(v => v.fingerprint));
-        if (uniqueFingerprints.size >= 3 && !uniqueFingerprints.has(fingerprint)) {
-          logVoteAttempt(clientIp, fingerprint, candidate, false, 'Çok fazla farklı fingerprint aynı IP\'den');
+        // Son 1 saat içinde gelen oyları kontrol et
+        const now = new Date();
+        const recentVotes = ipVotes.filter(v => (now - new Date(v.created_at)) < 3600 * 1000);
+        
+        // Eğer son 1 saatte aynı IP'den 5'ten fazla farklı cihaz oy kullandıysa engelle
+        if (recentVotes.length >= 5 && !uniqueFingerprints.has(fingerprint)) {
+          logVoteAttempt(clientIp, fingerprint, candidate, false, 'Aynı IP\'den kısa sürede çok fazla oy denemesi');
           return res.status(409).json({ 
-            error: 'Bu IP adresinden çok fazla farklı cihaz tespit edildi. Güvenlik nedeniyle engellenmiştir.' 
+            error: 'Bu ağ bağlantısından kısa süre içinde çok fazla deneme yapıldı. Lütfen bir süre sonra tekrar deneyin.' 
           });
         }
       }
@@ -385,9 +390,24 @@ app.post('/api/vote', voteLimit, async (req, res) => {
         }
       }
       
-      // IP başına maksimum oy sayısı kontrolü (incognito koruması)
+      // Zaman bazlı incognito mod koruması (demo modu)
+      const now = new Date();
+      const recentDemoVotes = demoVoteHistory.filter(vote => 
+        vote.ip_address === clientIp && 
+        (now - new Date(vote.timestamp)) < 3600 * 1000 // Son 1 saat
+      );
+      
+      // Son 1 saatte aynı IP'den 5'ten fazla oy varsa engelle
+      if (recentDemoVotes.length >= 5) {
+        logVoteAttempt(clientIp, fingerprint, candidate, false, 'Aynı IP\'den kısa sürede çok fazla oy denemesi (demo)');
+        return res.status(409).json({ 
+          error: 'Bu ağ bağlantısından kısa süre içinde çok fazla deneme yapıldı. Lütfen bir süre sonra tekrar deneyin.' 
+        });
+      }
+      
+      // IP başına maksimum oy sayısı kontrolü (incognito koruması) - daha esnek
       const currentIpVotes = ipVoteCounts.get(clientIp) || 0;
-      if (currentIpVotes >= 3) { // Aynı IP'den maksimum 3 oy
+      if (currentIpVotes >= 10) { // Aynı IP'den maksimum 10 oy (3'ten yükseltildi)
         logVoteAttempt(clientIp, fingerprint, candidate, false, 'IP vote limit exceeded (demo)');
         return res.status(409).json({ 
           error: 'Bu ağ bağlantısından çok fazla oy kullanılmış. Lütfen farklı bir ağ bağlantısı kullanın.' 
@@ -399,6 +419,19 @@ app.post('/api/vote', voteLimit, async (req, res) => {
       deviceSignatures.set(deviceSignature, fingerprint);
       ipVoteCounts.set(clientIp, currentIpVotes + 1);
       demoVotes[candidate]++;
+      
+      // Zaman damgalı oy geçmişine ekle (demo modu)
+      demoVoteHistory.push({
+        timestamp: new Date().toISOString(),
+        ip_address: clientIp,
+        fingerprint: fingerprint,
+        candidate: candidate
+      });
+      
+      // Son 1000 oy geçmişini tut (bellek yönetimi)
+      if (demoVoteHistory.length > 1000) {
+        demoVoteHistory = demoVoteHistory.slice(-1000);
+      }
       
       logVoteAttempt(clientIp, fingerprint, candidate, true, 'Vote recorded successfully (demo)');
       console.log('Demo oy kaydedildi:', candidate, 'IP:', clientIp, 'Fingerprint:', fingerprint.substring(0, 10) + '...');
