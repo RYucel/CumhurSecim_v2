@@ -49,9 +49,9 @@ async function generateFingerprint() {
         console.log('FingerprintJS Generated fingerprint:', userFingerprint.substring(0, 10) + '...');
         
     } catch (error) {
-        console.warn('FingerprintJS yüklenemedi, fallback sisteme geçiliyor:', error);
+        console.warn('FingerprintJS yüklenemedi, güçlendirilmiş fallback sisteme geçiliyor:', error);
         
-        // Fallback: Eski sistem
+        // Güçlendirilmiş Fallback: Incognito mod için özel sistem
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
         ctx.textBaseline = 'top';
@@ -60,25 +60,83 @@ async function generateFingerprint() {
         ctx.fillRect(125, 1, 62, 20);
         ctx.fillStyle = '#069';
         ctx.fillText('KKTC Seçim 2025 🗳️', 2, 2);
+        ctx.fillStyle = 'rgba(102, 204, 0, 0.7)';
+        ctx.fillText('Incognito Fingerprint', 4, 17);
         
+        // WebGL fingerprinting (incognito modda bile çalışır)
+        let webglInfo = '';
+        try {
+            const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+            if (gl) {
+                const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+                if (debugInfo) {
+                    webglInfo = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL) + '|' + 
+                               gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+                }
+                webglInfo += '|' + gl.getParameter(gl.VERSION);
+            }
+        } catch (e) {
+            webglInfo = 'webgl_error';
+        }
+        
+        // Audio context fingerprinting
+        let audioFingerprint = '';
+        try {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            audioFingerprint = audioCtx.sampleRate + '|' + audioCtx.state + '|' + audioCtx.baseLatency;
+            audioCtx.close();
+        } catch (e) {
+            audioFingerprint = 'audio_error';
+        }
+        
+        // Gelişmiş cihaz bilgileri (incognito modda bile mevcut)
         const deviceInfo = [
             navigator.userAgent,
             navigator.language,
+            navigator.languages ? navigator.languages.join(',') : '',
             navigator.platform,
+            navigator.cookieEnabled,
+            navigator.doNotTrack,
+            navigator.hardwareConcurrency || 'unknown',
+            navigator.maxTouchPoints || 0,
             screen.width + 'x' + screen.height,
+            screen.colorDepth,
+            screen.pixelDepth,
+            window.devicePixelRatio || 1,
             new Date().getTimezoneOffset(),
-            canvas.toDataURL()
+            Intl.DateTimeFormat().resolvedOptions().timeZone || 'unknown',
+            window.innerWidth + 'x' + window.innerHeight,
+            document.documentElement.clientWidth + 'x' + document.documentElement.clientHeight,
+            canvas.toDataURL(),
+            webglInfo,
+            audioFingerprint,
+            // Tarayıcı özelliklerini ekle
+            'localStorage' in window,
+            'sessionStorage' in window,
+            'indexedDB' in window,
+            navigator.plugins ? navigator.plugins.length : 0,
+            // Zaman damgası ile session benzersizliği (incognito için)
+            Date.now().toString().slice(-6) // Son 6 hanesi
         ].join('|');
         
-        let hash = 0;
+        // Çift hash algoritması
+        let hash1 = 0;
+        let hash2 = 0;
         for (let i = 0; i < deviceInfo.length; i++) {
             const char = deviceInfo.charCodeAt(i);
-            hash = ((hash << 5) - hash) + char;
-            hash = hash & hash;
+            hash1 = ((hash1 << 5) - hash1) + char;
+            hash1 = hash1 & hash1;
+            hash2 = ((hash2 << 3) - hash2) + char * 31;
+            hash2 = hash2 & hash2;
         }
         
-        userFingerprint = 'fallback_' + Math.abs(hash).toString(36);
-        console.log('Fallback fingerprint generated:', userFingerprint.substring(0, 10) + '...');
+        // Benzersiz fallback fingerprint oluştur
+        const timestamp = Date.now().toString(36);
+        const randomComponent = Math.random().toString(36).substring(2, 8);
+        userFingerprint = 'fallback_' + Math.abs(hash1).toString(36) + '_' + Math.abs(hash2).toString(36) + '_' + timestamp + '_' + randomComponent;
+        userFingerprint = userFingerprint.substring(0, 50); // 50 karakter limit
+        
+        console.log('Güçlendirilmiş fallback fingerprint generated:', userFingerprint.substring(0, 15) + '...');
     }
     
     // Local storage'da kontrol et

@@ -81,6 +81,23 @@ function validateFingerprint(fingerprint) {
     return validPattern.test(fingerprint);
 }
 
+// Fallback fingerprint kontrolü (incognito mod tespiti)
+function isFallbackFingerprint(fingerprint) {
+    return fingerprint && fingerprint.startsWith('fallback_');
+}
+
+// Fallback fingerprint'in base kısmını al (zaman damgası ve rastgele kısım hariç)
+function getFallbackBase(fingerprint) {
+    if (!isFallbackFingerprint(fingerprint)) return fingerprint;
+    
+    const parts = fingerprint.split('_');
+    if (parts.length >= 3) {
+        // fallback_hash1_hash2 kısmını al (zaman damgası ve rastgele kısım hariç)
+        return parts[0] + '_' + parts[1] + '_' + parts[2];
+    }
+    return fingerprint;
+}
+
 // Input sanitization fonksiyonu
 function sanitizeInput(input) {
     if (typeof input !== 'string') return '';
@@ -226,6 +243,31 @@ app.post('/api/vote', voteLimit, async (req, res) => {
         return res.status(409).json({ error: 'Bu cihazdan zaten oy kullanılmış' });
       }
 
+      // Fallback fingerprint özel kontrolü (incognito mod)
+      if (isFallbackFingerprint(fingerprint)) {
+        const fallbackBase = getFallbackBase(fingerprint);
+        
+        // Aynı base'e sahip fallback fingerprint'leri kontrol et
+        const { data: fallbackVotes } = await supabase
+          .from('votes')
+          .select('fingerprint, ip_address')
+          .like('fingerprint', 'fallback_%');
+
+        if (fallbackVotes && fallbackVotes.length > 0) {
+          const sameFallbackBase = fallbackVotes.find(vote => {
+            const voteBase = getFallbackBase(vote.fingerprint);
+            return voteBase === fallbackBase || vote.ip_address === clientIp;
+          });
+          
+          if (sameFallbackBase) {
+            logVoteAttempt(clientIp, fingerprint, candidate, false, 'Fallback fingerprint - incognito mod tespit edildi');
+            return res.status(409).json({ 
+              error: 'Incognito/gizli mod kullanarak tekrar oy verme tespit edildi! (Fallback sistem)' 
+            });
+          }
+        }
+      }
+
       // Incognito mod koruması: IP + User-Agent kombinasyonu kontrolü
       const userAgent = req.get('User-Agent') || '';
       const deviceSignature = `${clientIp}|${userAgent.substring(0, 100)}`;
@@ -275,6 +317,24 @@ app.post('/api/vote', voteLimit, async (req, res) => {
       if (demoFingerprints.has(fingerprint)) {
         logVoteAttempt(clientIp, fingerprint, candidate, false, 'Bu cihazdan zaten oy kullanılmış (demo)');
         return res.status(409).json({ error: 'Bu cihazdan zaten oy kullanılmış. Her cihaz sadece bir kez oy kullanabilir.' });
+      }
+      
+      // Fallback fingerprint özel kontrolü (demo modunda incognito)
+      if (isFallbackFingerprint(fingerprint)) {
+        const fallbackBase = getFallbackBase(fingerprint);
+        
+        // Demo modunda kayıtlı fallback fingerprint'leri kontrol et
+        for (const existingFingerprint of demoFingerprints) {
+          if (isFallbackFingerprint(existingFingerprint)) {
+            const existingBase = getFallbackBase(existingFingerprint);
+            if (existingBase === fallbackBase) {
+              logVoteAttempt(clientIp, fingerprint, candidate, false, 'Demo: Fallback fingerprint - incognito mod tespit edildi');
+              return res.status(409).json({ 
+                error: 'Incognito/gizli mod kullanarak tekrar oy verme tespit edildi! (Demo - Fallback sistem)' 
+              });
+            }
+          }
+        }
       }
       
       // Incognito mod koruması: IP + User-Agent kombinasyonu kontrolü
