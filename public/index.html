@@ -351,21 +351,35 @@
     <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
-    <!-- FingerprintJS CDN -->
+    <!-- Simple Browser Fingerprinting -->
     <script>
-        // FingerprintJS async loading
-        (function() {
-            const script = document.createElement('script');
-            script.src = 'https://openfpcdn.io/fingerprintjs/v4';
-            script.async = true;
-            script.onload = function() {
-                console.log('FingerprintJS yüklendi');
-            };
-            script.onerror = function() {
-                console.warn('FingerprintJS yüklenemedi, fallback sisteme geçiliyor');
-            };
-            document.head.appendChild(script);
-        })();
+        // Basit tarayıcı parmak izi oluşturma
+        function generateSimpleFingerprint() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            ctx.textBaseline = 'top';
+            ctx.font = '14px Arial';
+            ctx.fillText('Browser fingerprint', 2, 2);
+            
+            const fingerprint = [
+                navigator.userAgent,
+                navigator.language,
+                screen.width + 'x' + screen.height,
+                new Date().getTimezoneOffset(),
+                canvas.toDataURL()
+            ].join('|');
+            
+            // Simple hash function
+            let hash = 0;
+            for (let i = 0; i < fingerprint.length; i++) {
+                const char = fingerprint.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash; // Convert to 32-bit integer
+            }
+            return Math.abs(hash).toString(16);
+        }
+        
+        window.generateFingerprint = generateSimpleFingerprint;
     </script>
     
     <script src="script.js"></script>

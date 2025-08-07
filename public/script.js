@@ -33,25 +33,20 @@ async function initializeApp() {
     initializeChart();
 }
 
-// FingerprintJS ile güvenli cihaz parmak izi oluştur
-async function generateFingerprint() {
+// Basit tarayıcı parmak izi oluştur
+function generateFingerprint() {
     try {
-        // FingerprintJS kütüphanesinin yüklenmesini bekle
-        if (typeof FingerprintJS === 'undefined') {
-            throw new Error('FingerprintJS kütüphanesi yüklenmedi');
+        // HTML'de tanımlanan basit fingerprint fonksiyonunu kullan
+        if (typeof window.generateFingerprint === 'function') {
+            userFingerprint = window.generateFingerprint();
+            console.log('Simple fingerprint generated:', userFingerprint.substring(0, 10) + '...');
+            return;
         }
         
-        // FingerprintJS'i başlat
-        const fp = await FingerprintJS.load();
-        const result = await fp.get();
-        
-        // FingerprintJS'den gelen visitor ID'yi kullan
-        userFingerprint = result.visitorId;
-        
-        console.log('FingerprintJS Generated fingerprint:', userFingerprint.substring(0, 10) + '...');
+        console.warn('Basit fingerprint fonksiyonu bulunamadı, fallback sisteme geçiliyor...');
         
     } catch (error) {
-        console.warn('FingerprintJS yüklenemedi, güçlendirilmiş fallback sisteme geçiliyor:', error);
+        console.warn('Fingerprint oluşturma hatası, fallback sisteme geçiliyor:', error);
         
         // Güçlendirilmiş Fallback: Incognito mod için özel sistem
         const canvas = document.createElement('canvas');
