@@ -264,6 +264,7 @@ app.post('/api/vote', voteLimit, async (req, res) => {
   try {
     let { candidate, fingerprint } = req.body;
     const clientIp = getRealIpAddress(req);
+    const userAgent = req.get('User-Agent') || '';
     
     // Input sanitization
     candidate = sanitizeInput(candidate);
@@ -314,97 +315,80 @@ app.post('/api/vote', voteLimit, async (req, res) => {
     }
 
     if (supabase) {
-      // Supabase ile çalış - Atomik işlem (Race Condition koruması)
-      
-      // Fallback fingerprint özel kontrolü (incognito mod) - Sıkılaştırılmış
-      if (isFallbackFingerprint(fingerprint)) {
-        // Aynı IP'den herhangi bir fallback fingerprint varsa engelle
-        const { data: fallbackVotes } = await supabase
-          .from('votes')
-          .select('fingerprint, ip_address')
-          .eq('ip_address', clientIp)
-          .like('fingerprint', 'fallback_%');
+      // Gelişmiş güvenlik sistemi ile oy kaydetme
+      try {
+        // Gelişmiş güvenlik fonksiyonunu çağır
+        const { data: voteResult, error } = await supabase
+          .rpc('secure_vote_insert', {
+            p_candidate: candidate,
+            p_fingerprint: fingerprint,
+            p_ip_address: clientIp,
+            p_user_agent: userAgent
+          });
 
-        if (fallbackVotes && fallbackVotes.length > 0) {
-          logVoteAttempt(clientIp, fingerprint, candidate, false, 'Fallback fingerprint - aynı IP\'den zaten fallback oy var');
-          return res.status(409).json({ 
-            error: 'Bu ağ bağlantısından zaten incognito/gizli modda oy kullanılmış. Her IP adresinden sadece bir fallback oy kabul edilir.' 
+        if (error) {
+          console.error('Secure vote insert error:', error);
+          logVoteAttempt(clientIp, fingerprint, candidate, false, 'Database function error: ' + error.message);
+          return res.status(500).json({ 
+            error: 'Oy kaydedilemedi: ' + error.message,
+            error_code: 'DATABASE_FUNCTION_ERROR'
           });
         }
-      }
 
-      // Gelişmiş incognito mod koruması: Sadece aşırı şüpheli durumları engelle
-      const userAgent = req.get('User-Agent') || '';
-      
-      // Aynı IP'den çok fazla farklı fingerprint gelirse şüpheli
-      const { data: ipVotes } = await supabase
-        .from('votes')
-        .select('fingerprint, created_at') // created_at zamanını da al
-        .eq('ip_address', clientIp);
-      
-      if (ipVotes && ipVotes.length >= 10) { // Limiti 3'ten 10'a yükselt
-        const uniqueFingerprints = new Set(ipVotes.map(v => v.fingerprint));
-        // Son 1 saat içinde gelen oyları kontrol et
-        const now = new Date();
-        const recentVotes = ipVotes.filter(v => (now - new Date(v.created_at)) < 3600 * 1000);
+        // Fonksiyon sonucunu kontrol et
+        if (!voteResult || !voteResult.success) {
+          const errorCode = voteResult?.error_code || 'UNKNOWN_ERROR';
+          const errorMessage = voteResult?.error || 'Bilinmeyen hata';
+          const details = voteResult?.details;
+          
+          logVoteAttempt(clientIp, fingerprint, candidate, false, `Security check failed: ${errorCode} - ${errorMessage}`);
+          
+          // Hata koduna göre HTTP status belirle
+          let statusCode = 409; // Default: Conflict
+          if (errorCode === 'RATE_LIMIT_EXCEEDED') {
+            statusCode = 429; // Too Many Requests
+          } else if (errorCode === 'DATABASE_ERROR') {
+            statusCode = 500; // Internal Server Error
+          }
+          
+          const response = {
+            error: errorMessage,
+            error_code: errorCode
+          };
+          
+          // Detayları varsa ekle
+          if (details) {
+            response.details = details;
+          }
+          
+          return res.status(statusCode).json(response);
+        }
+
+        // Başarılı oy kaydı
+        logVoteAttempt(clientIp, fingerprint, candidate, true, 'Vote recorded successfully with advanced security');
         
-        // Eğer son 1 saatte aynı IP'den 5'ten fazla farklı cihaz oy kullandıysa engelle
-        if (recentVotes.length >= 5 && !uniqueFingerprints.has(fingerprint)) {
-          logVoteAttempt(clientIp, fingerprint, candidate, false, 'Aynı IP\'den kısa sürede çok fazla oy denemesi');
-          return res.status(409).json({ 
-            error: 'Bu ağ bağlantısından kısa süre içinde çok fazla deneme yapıldı. Lütfen bir süre sonra tekrar deneyin.' 
-          });
+        // Korelasyon analizi sonucunu logla
+        if (voteResult.correlation_analysis) {
+          const correlation = voteResult.correlation_analysis;
+          if (correlation.is_suspicious) {
+            console.warn('Suspicious vote detected:', {
+              ip: clientIp,
+              fingerprint: fingerprint.substring(0, 10) + '...',
+              risk_level: correlation.risk_level,
+              ip_fingerprint_count: correlation.ip_fingerprint_count,
+              fingerprint_ip_count: correlation.fingerprint_ip_count
+            });
+          }
         }
-      }
-
-      // IP ve fingerprint kombinasyonu bazlı duplicate kontrol
-      const { data: existingVote } = await supabase
-        .from('votes')
-        .select('id, fingerprint, candidate, created_at')
-        .eq('ip_address', clientIp)
-        .eq('fingerprint', fingerprint)
-        .limit(1);
-
-      if (existingVote && existingVote.length > 0) {
-        logVoteAttempt(clientIp, fingerprint, candidate, false, 'Aynı IP ve cihaz kombinasyonundan zaten oy kullanılmış');
-        return res.status(409).json({ 
-          error: 'Bu cihazdan zaten oy kullanılmış. Her cihazdan sadece bir oy kabul edilir.',
-          details: 'Güvenlik nedeniyle aynı ağ bağlantısından birden fazla oy kullanılamaz.'
+        
+      } catch (functionError) {
+        console.error('Secure vote function call error:', functionError);
+        logVoteAttempt(clientIp, fingerprint, candidate, false, 'Function call error: ' + functionError.message);
+        return res.status(500).json({ 
+          error: 'Güvenlik sistemi hatası: ' + functionError.message,
+          error_code: 'SECURITY_SYSTEM_ERROR'
         });
       }
-
-      // Atomik oy kaydetme - Doğrudan insert yap, hata alırsan duplicate demektir
-      const { data, error } = await supabase
-        .from('votes')
-        .insert([
-          {
-            candidate: candidate,
-            fingerprint: fingerprint,
-            ip_address: clientIp,
-            user_agent: req.get('User-Agent') || '',
-            created_at: new Date().toISOString()
-          }
-        ]);
-
-      if (error) {
-        console.error('Supabase insert error:', error);
-        console.error('Error code:', error.code);
-        console.error('Error message:', error.message);
-        
-        // PostgreSQL unique constraint hatası (23505) - Duplicate fingerprint
-        if (error.code === '23505' && error.message.includes('votes_fingerprint_unique')) {
-          logVoteAttempt(clientIp, fingerprint, candidate, false, 'Duplicate fingerprint (race condition prevented)');
-          return res.status(409).json({ error: 'Bu cihazdan zaten oy kullanılmış' });
-        }
-        
-        // Diğer veritabanı hataları
-        console.error('Error details:', error.details);
-        console.error('Error hint:', error.hint);
-        logVoteAttempt(clientIp, fingerprint, candidate, false, 'Database error: ' + error.message);
-        return res.status(500).json({ error: 'Oy kaydedilemedi: ' + error.message });
-      }
-
-      logVoteAttempt(clientIp, fingerprint, candidate, true, 'Vote recorded successfully');
     } else {
       // Demo modu - Atomik işlem (Race Condition koruması)
       
