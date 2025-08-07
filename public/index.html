@@ -353,15 +353,11 @@
     
     <!-- Simple Browser Fingerprinting -->
     <script>
-        // Basit tarayıcı parmak izi oluşturma - Deterministik versiyon
+        // Tamamen deterministik tarayıcı parmak izi oluşturma
         function generateSimpleFingerprint() {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            ctx.textBaseline = 'top';
-            ctx.font = '14px Arial';
-            ctx.fillText('Browser fingerprint', 2, 2);
+            // Canvas kullanmıyoruz çünkü deterministik değil
             
-            // Deterministik fingerprint bileşenleri (zaman ve rastgele değer yok)
+            // Tamamen deterministik fingerprint bileşenleri
             const fingerprint = [
                 navigator.userAgent,
                 navigator.language,
@@ -375,33 +371,43 @@
                 Intl.DateTimeFormat().resolvedOptions().timeZone || 'unknown',
                 navigator.hardwareConcurrency || 'unknown',
                 navigator.maxTouchPoints || 0,
-                navigator.cookieEnabled,
-                navigator.doNotTrack,
-                canvas.toDataURL()
+                navigator.cookieEnabled ? 'true' : 'false',
+                navigator.doNotTrack || 'unspecified',
+                // Canvas kaldırıldı - deterministik değil
+                // Bunun yerine daha stabil özellikler
+                navigator.vendor || 'unknown',
+                navigator.product || 'unknown',
+                navigator.productSub || 'unknown',
+                navigator.appName || 'unknown',
+                navigator.appVersion || 'unknown'
             ].join('|');
             
-            // Gelişmiş hash function - deterministik
-            let hash1 = 0;
+            // Çoklu hash algoritması - tamamen deterministik
+            let hash1 = 5381; // DJB2 hash başlangıç değeri
             let hash2 = 0;
+            let hash3 = 1;
+            
             for (let i = 0; i < fingerprint.length; i++) {
                 const char = fingerprint.charCodeAt(i);
-                hash1 = ((hash1 << 5) - hash1) + char;
-                hash1 = hash1 & hash1; // Convert to 32-bit integer
-                hash2 = ((hash2 << 3) - hash2) + char * 7;
-                hash2 = hash2 & hash2;
+                
+                // DJB2 hash algoritması
+                hash1 = ((hash1 << 5) + hash1) + char;
+                hash1 = hash1 & 0x7FFFFFFF; // 31-bit pozitif integer
+                
+                // FNV-1a benzeri hash
+                hash2 = hash2 ^ char;
+                hash2 = (hash2 * 16777619) & 0x7FFFFFFF;
+                
+                // Basit çarpımsal hash
+                hash3 = (hash3 * 31 + char) & 0x7FFFFFFF;
             }
             
-            // Deterministik fingerprint oluştur (zaman ve rastgele değer yok)
-            const baseHash = Math.abs(hash1).toString(16) + Math.abs(hash2).toString(16);
+            // Deterministik fingerprint oluştur
+            const part1 = hash1.toString(36);
+            const part2 = hash2.toString(36);
+            const part3 = hash3.toString(36);
             
-            // Ek deterministik hash
-            let hash3 = 0;
-            for (let i = 0; i < baseHash.length; i++) {
-                hash3 = ((hash3 << 2) - hash3) + baseHash.charCodeAt(i);
-                hash3 = hash3 & hash3;
-            }
-            
-            return 'fp_' + baseHash + '_' + Math.abs(hash3).toString(36).substring(0, 12);
+            return 'fp_' + part1 + '_' + part2 + '_' + part3;
         }
         
         window.generateBrowserFingerprint = generateSimpleFingerprint;

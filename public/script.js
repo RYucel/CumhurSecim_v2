@@ -48,21 +48,12 @@ function generateFingerprint() {
     } catch (error) {
         console.warn('Fingerprint oluşturma hatası, fallback sisteme geçiliyor:', error);
         
-        // Deterministik Fallback: Incognito mod için özel sistem
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        ctx.textBaseline = 'top';
-        ctx.font = '14px Arial';
-        ctx.fillStyle = '#f60';
-        ctx.fillRect(125, 1, 62, 20);
-        ctx.fillStyle = '#069';
-        ctx.fillText('KKTC Seçim 2025 🗳️', 2, 2);
-        ctx.fillStyle = 'rgba(102, 204, 0, 0.7)';
-        ctx.fillText('Deterministik Fingerprint', 4, 17);
+        // Tamamen deterministik fallback sistem
         
-        // WebGL fingerprinting (incognito modda bile çalışır)
+        // WebGL fingerprinting (deterministik)
         let webglInfo = '';
         try {
+            const canvas = document.createElement('canvas');
             const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
             if (gl) {
                 const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
@@ -76,7 +67,7 @@ function generateFingerprint() {
             webglInfo = 'webgl_error';
         }
         
-        // Audio context fingerprinting
+        // Audio context fingerprinting (deterministik)
         let audioFingerprint = '';
         try {
             const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -86,14 +77,14 @@ function generateFingerprint() {
             audioFingerprint = 'audio_error';
         }
         
-        // Deterministik cihaz bilgileri (zaman ve rastgele değer yok)
+        // Tamamen deterministik cihaz bilgileri (canvas ve değişken değerler yok)
         const deviceInfo = [
             navigator.userAgent,
             navigator.language,
             navigator.languages ? navigator.languages.join(',') : '',
             navigator.platform,
-            navigator.cookieEnabled,
-            navigator.doNotTrack,
+            navigator.cookieEnabled ? 'true' : 'false',
+            navigator.doNotTrack || 'unspecified',
             navigator.hardwareConcurrency || 'unknown',
             navigator.maxTouchPoints || 0,
             screen.width + 'x' + screen.height,
@@ -102,41 +93,49 @@ function generateFingerprint() {
             window.devicePixelRatio || 1,
             new Date().getTimezoneOffset(),
             Intl.DateTimeFormat().resolvedOptions().timeZone || 'unknown',
-            canvas.toDataURL(),
+            // Canvas kaldırıldı - deterministik değil
             webglInfo,
             audioFingerprint,
             // Tarayıcı özelliklerini ekle
-            'localStorage' in window,
-            'sessionStorage' in window,
-            'indexedDB' in window,
-            navigator.plugins ? navigator.plugins.length : 0
-            // Zaman damgası ve rastgele değer kaldırıldı - deterministik olması için
+            'localStorage' in window ? 'true' : 'false',
+            'sessionStorage' in window ? 'true' : 'false',
+            'indexedDB' in window ? 'true' : 'false',
+            navigator.plugins ? navigator.plugins.length.toString() : '0',
+            navigator.vendor || 'unknown',
+            navigator.product || 'unknown',
+            navigator.productSub || 'unknown',
+            navigator.appName || 'unknown',
+            navigator.appVersion || 'unknown'
         ].join('|');
         
-        // Çift hash algoritması
-        let hash1 = 0;
-        let hash2 = 0;
+        // Çoklu deterministik hash algoritması
+        let hash1 = 5381; // DJB2 hash
+        let hash2 = 0;     // FNV-1a benzeri
+        let hash3 = 1;     // Çarpımsal hash
+        
         for (let i = 0; i < deviceInfo.length; i++) {
             const char = deviceInfo.charCodeAt(i);
-            hash1 = ((hash1 << 5) - hash1) + char;
-            hash1 = hash1 & hash1;
-            hash2 = ((hash2 << 3) - hash2) + char * 31;
-            hash2 = hash2 & hash2;
+            
+            // DJB2 hash algoritması
+            hash1 = ((hash1 << 5) + hash1) + char;
+            hash1 = hash1 & 0x7FFFFFFF;
+            
+            // FNV-1a benzeri hash
+            hash2 = hash2 ^ char;
+            hash2 = (hash2 * 16777619) & 0x7FFFFFFF;
+            
+            // Basit çarpımsal hash
+            hash3 = (hash3 * 31 + char) & 0x7FFFFFFF;
         }
         
-        // Ek deterministik hash
-        let hash3 = 0;
-        const combinedHash = Math.abs(hash1).toString(36) + Math.abs(hash2).toString(36);
-        for (let i = 0; i < combinedHash.length; i++) {
-            hash3 = ((hash3 << 2) - hash3) + combinedHash.charCodeAt(i);
-            hash3 = hash3 & hash3;
-        }
+        // Tamamen deterministik fallback fingerprint oluştur
+        const part1 = hash1.toString(36);
+        const part2 = hash2.toString(36);
+        const part3 = hash3.toString(36);
         
-        // Deterministik fallback fingerprint oluştur
-        userFingerprint = 'fallback_' + Math.abs(hash1).toString(36) + '_' + Math.abs(hash2).toString(36) + '_' + Math.abs(hash3).toString(36);
-        userFingerprint = userFingerprint.substring(0, 50); // 50 karakter limit
+        userFingerprint = 'fallback_' + part1 + '_' + part2 + '_' + part3;
         
-        console.log('Deterministik fallback fingerprint generated:', userFingerprint.substring(0, 15) + '...');
+        console.log('Tamamen deterministik fallback fingerprint generated:', userFingerprint.substring(0, 20) + '...');
     }
     
     // Local storage'da kontrol et
