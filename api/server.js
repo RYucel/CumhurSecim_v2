@@ -185,10 +185,10 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "https://cdn.jsdelivr.net", "https://openfpcdn.io", "'unsafe-inline'"],
+      scriptSrc: ["'self'", "https://cdn.jsdelivr.net", "https://openfpcdn.io", "'unsafe-inline'", "'unsafe-eval'"],
       styleSrc: ["'self'", "https://fonts.googleapis.com", "'unsafe-inline'"], // CSS için gerekli
       imgSrc: ["'self'", "data:"],
-      connectSrc: ["'self'", "https://ip-api.com"],
+      connectSrc: ["'self'", "https://ip-api.com", "https://openfpcdn.io"],
       fontSrc: ["'self'", "https://fonts.googleapis.com", "https://fonts.gstatic.com"],
       objectSrc: ["'none'"],
       mediaSrc: ["'self'"],
@@ -241,7 +241,18 @@ app.get('/', (req, res) => {
 
 // Manifest.json için özel route (Vercel deployment fix)
 app.get('/manifest.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader('Cache-Control', 'public, max-age=3600');
   res.sendFile(__dirname + '/public/manifest.json');
+});
+
+// PWA ve static dosyalar için ek route'lar
+app.get('/favicon.ico', (req, res) => {
+  res.sendFile(__dirname + '/public/favicon.ico');
+});
+
+app.get('/apple-touch-icon.png', (req, res) => {
+  res.sendFile(__dirname + '/public/apple-touch-icon.png');
 });
 
 // Oy verme endpoint'i
