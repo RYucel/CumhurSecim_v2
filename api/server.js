@@ -185,11 +185,11 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"], // CSS için gerekli
+      scriptSrc: ["'self'", "https://cdn.jsdelivr.net", "https://openfpcdn.io", "'unsafe-inline'"],
+      styleSrc: ["'self'", "https://fonts.googleapis.com", "'unsafe-inline'"], // CSS için gerekli
       imgSrc: ["'self'", "data:"],
-      connectSrc: ["'self'"],
-      fontSrc: ["'self'"],
+      connectSrc: ["'self'", "https://ip-api.com"],
+      fontSrc: ["'self'", "https://fonts.googleapis.com", "https://fonts.gstatic.com"],
       objectSrc: ["'none'"],
       mediaSrc: ["'self'"],
       frameSrc: ["'none'"]
@@ -237,6 +237,11 @@ app.use(generalLimit);
 // Ana sayfa
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/public/index.html');
+});
+
+// Manifest.json için özel route (Vercel deployment fix)
+app.get('/manifest.json', (req, res) => {
+  res.sendFile(__dirname + '/public/manifest.json');
 });
 
 // Oy verme endpoint'i
