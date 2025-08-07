@@ -37,8 +37,8 @@ async function initializeApp() {
 function generateFingerprint() {
     try {
         // HTML'de tanımlanan basit fingerprint fonksiyonunu kullan
-        if (typeof window.generateFingerprint === 'function') {
-            userFingerprint = window.generateFingerprint();
+        if (typeof window.generateBrowserFingerprint === 'function') {
+            userFingerprint = window.generateBrowserFingerprint();
             console.log('Simple fingerprint generated:', userFingerprint.substring(0, 10) + '...');
             return;
         }
