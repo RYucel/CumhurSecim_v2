@@ -3,6 +3,8 @@ let selectedCandidate = null;
 let userFingerprint = null;
 let hasVoted = false;
 let resultsChart = null;
+let lastUpdateData = null;
+let chartUpdateTimeout = null;
 
 // Chart.js yüklenmesini bekle
 async function waitForChart() {
@@ -424,39 +426,53 @@ function updateResultsTab(data) {
 // Basit bar chart oluştur
 function initializeChart() {
     console.log('Basit bar chart başlatılıyor...');
-    updateSimpleChart({ votes: { 'ersin-tatar': 0, 'tufan-erhurman': 0, 'mehmet-hasguler': 1 } });
+    updateSimpleChart({ 
+        votes: { 'ersin-tatar': 0, 'tufan-erhurman': 0, 'mehmet-hasguler': 1 },
+        percentages: { 'ersin-tatar': 0, 'tufan-erhurman': 0, 'mehmet-hasguler': 100 }
+    });
 }
 
 // Basit chart güncelle
 function updateSimpleChart(data) {
-    const { votes } = data;
-    const totalVotes = Object.values(votes).reduce((a, b) => a + b, 0);
+    const { votes, percentages } = data;
     
     // Ersin Tatar
     const ersinVotes = votes['ersin-tatar'] || 0;
-    const ersinPercent = totalVotes > 0 ? Math.round((ersinVotes / totalVotes) * 100) : 0;
-    document.getElementById('bar-ersin').style.width = totalVotes > 0 ? `${ersinPercent}%` : '0%';
+    const ersinPercent = percentages['ersin-tatar'] || 0;
+    document.getElementById('bar-ersin').style.width = `${ersinPercent}%`;
     document.getElementById('value-ersin').textContent = `${ersinVotes} oy (${ersinPercent}%)`;
     
     // Tufan Erhürman
     const tufanVotes = votes['tufan-erhurman'] || 0;
-    const tufanPercent = totalVotes > 0 ? Math.round((tufanVotes / totalVotes) * 100) : 0;
-    document.getElementById('bar-tufan').style.width = totalVotes > 0 ? `${tufanPercent}%` : '0%';
+    const tufanPercent = percentages['tufan-erhurman'] || 0;
+    document.getElementById('bar-tufan').style.width = `${tufanPercent}%`;
     document.getElementById('value-tufan').textContent = `${tufanVotes} oy (${tufanPercent}%)`;
     
     // Mehmet Hasgüler
     const mehmetVotes = votes['mehmet-hasguler'] || 0;
-    const mehmetPercent = totalVotes > 0 ? Math.round((mehmetVotes / totalVotes) * 100) : 0;
-    document.getElementById('bar-mehmet').style.width = totalVotes > 0 ? `${mehmetPercent}%` : '0%';
+    const mehmetPercent = percentages['mehmet-hasguler'] || 0;
+    document.getElementById('bar-mehmet').style.width = `${mehmetPercent}%`;
     document.getElementById('value-mehmet').textContent = `${mehmetVotes} oy (${mehmetPercent}%)`;
 }
 
-// Grafiği güncelle
+// Grafiği güncelle (optimized with debounce)
 function updateChart(data) {
-    console.log('Chart güncelleniyor, gelen veri:', data);
-    // API'den gelen veri formatı: { votes: {...}, percentages: {...} }
-    // updateSimpleChart sadece votes objesini bekliyor
-    updateSimpleChart(data); // data zaten doğru formatta: { votes: {...} }
+    // Veri değişikliği kontrolü
+    if (lastUpdateData && JSON.stringify(lastUpdateData) === JSON.stringify(data)) {
+        return; // Aynı veri, güncelleme yapma
+    }
+    
+    // Önceki timeout'u temizle
+    if (chartUpdateTimeout) {
+        clearTimeout(chartUpdateTimeout);
+    }
+    
+    // Debounce ile chart güncelleme
+    chartUpdateTimeout = setTimeout(() => {
+        console.log('Chart güncelleniyor, gelen veri:', data);
+        updateSimpleChart(data);
+        lastUpdateData = JSON.parse(JSON.stringify(data)); // Deep copy
+    }, 100); // 100ms debounce
 }
 
 // Geri sayım sayacını başlat
