@@ -7,8 +7,8 @@ KKTC Cumhurbaşkanlığı seçimi için geliştirilmiş **güvenli** ve **şeffa
 ### 🔒 Güvenlik
 - **Rate Limiting**: Dakikada maksimum 2 oy verme denemesi
 - **Fingerprint Tabanlı Koruma**: Cihaz bazında tekrar oy verme engelleme
-- **IP Bazlı Koruma**: Her IP adresinden sadece bir oy kabul edilir
-- **Duplicate Oy Engelleme**: Aynı cihaz/IP'den birden fazla oy verme engellenir
+- **Cihaz Bazlı Koruma**: Her cihaz (IP + fingerprint kombinasyonu) sadece bir oy verebilir
+- **Duplicate Oy Engelleme**: Aynı IP ve cihaz ID kombinasyonundan birden fazla oy engellenir
 - **VPN/Proxy Tespiti**: VPN ve proxy kullanımı engellenir
 - **Input Sanitization**: XSS saldırılarına karşı koruma
 - **CSP Headers**: Content Security Policy ile güvenlik

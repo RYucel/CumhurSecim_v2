@@ -357,17 +357,18 @@ app.post('/api/vote', voteLimit, async (req, res) => {
         }
       }
 
-      // IP bazlı duplicate kontrol - Aynı IP'den zaten oy var mı?
-      const { data: existingIpVote } = await supabase
+      // IP ve fingerprint kombinasyonu bazlı duplicate kontrol
+      const { data: existingVote } = await supabase
         .from('votes')
         .select('id, fingerprint, candidate, created_at')
         .eq('ip_address', clientIp)
+        .eq('fingerprint', fingerprint)
         .limit(1);
 
-      if (existingIpVote && existingIpVote.length > 0) {
-        logVoteAttempt(clientIp, fingerprint, candidate, false, 'Aynı IP adresinden zaten oy kullanılmış');
+      if (existingVote && existingVote.length > 0) {
+        logVoteAttempt(clientIp, fingerprint, candidate, false, 'Aynı IP ve cihaz kombinasyonundan zaten oy kullanılmış');
         return res.status(409).json({ 
-          error: 'Bu ağ bağlantısından zaten oy kullanılmış. Her IP adresinden sadece bir oy kabul edilir.',
+          error: 'Bu cihazdan zaten oy kullanılmış. Her cihazdan sadece bir oy kabul edilir.',
           details: 'Güvenlik nedeniyle aynı ağ bağlantısından birden fazla oy kullanılamaz.'
         });
       }
@@ -407,13 +408,15 @@ app.post('/api/vote', voteLimit, async (req, res) => {
     } else {
       // Demo modu - Atomik işlem (Race Condition koruması)
       
-      // IP bazlı duplicate kontrol (demo modu) - Aynı IP'den zaten oy var mı?
-      const existingIpVote = demoVoteHistory.find(vote => vote.ip_address === clientIp);
-      if (existingIpVote) {
-        logVoteAttempt(clientIp, fingerprint, candidate, false, 'Aynı IP adresinden zaten oy kullanılmış (demo)');
+      // IP ve fingerprint kombinasyonu bazlı duplicate kontrol (demo modu)
+      const existingVote = demoVoteHistory.find(vote => 
+        vote.ip_address === clientIp && vote.fingerprint === fingerprint
+      );
+      if (existingVote) {
+        logVoteAttempt(clientIp, fingerprint, candidate, false, 'Aynı IP ve cihaz kombinasyonundan zaten oy kullanılmış (demo)');
         return res.status(409).json({ 
-          error: 'Bu ağ bağlantısından zaten oy kullanılmış. Her IP adresinden sadece bir oy kabul edilir.',
-          details: 'Güvenlik nedeniyle aynı ağ bağlantısından birden fazla oy kullanılamaz.'
+          error: 'Bu cihazdan zaten oy kullanılmış. Her cihazdan sadece bir oy kabul edilir.',
+          details: 'Güvenlik nedeniyle aynı cihazdan birden fazla oy kullanılamaz.'
         });
       }
 

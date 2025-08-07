@@ -9,8 +9,8 @@
 3. `supabase-setup.sql` dosyasını SQL Editor'da çalıştırın
 4. `supabase-unique-constraint.sql` dosyasını SQL Editor'da çalıştırın (fingerprint unique constraint)
 5. **ÖNEMLİ**: Eğer mevcut duplicate oylar varsa:
-   - `cleanup-duplicate-votes.sql` dosyasını çalıştırarak duplicate oyları temizleyin
-   - `add-ip-unique-constraint.sql` dosyasını çalıştırarak IP bazlı unique constraint ekleyin
+   - `cleanup-duplicate-votes.sql` dosyasını çalıştırarak duplicate oyları temizleyin (IP+fingerprint kombinasyonu bazlı)
+   - `add-ip-unique-constraint.sql` dosyasını çalıştırarak IP ve fingerprint kombinasyonu bazlı unique constraint ekleyin
 6. Project Settings > API'den URL ve Anon Key'i alın
 
 ### 2. GitHub Repository
