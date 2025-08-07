@@ -10,7 +10,8 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Trust proxy ayarı - gerçek IP adresini almak için
-app.set('trust proxy', true);
+// Sadece Vercel ve localhost için trust proxy
+app.set('trust proxy', process.env.NODE_ENV === 'production' ? 1 : false);
 
 // Supabase yapılandırması
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -583,6 +584,34 @@ app.get('/api/status', (req, res) => {
   });
 });
 
+// Debug endpoint for Supabase connection (removed for production)
+// app.get('/api/debug/supabase', async (req, res) => {
+//   try {
+//     if (!supabase) {
+//       return res.json({ error: 'Supabase not connected', supabase: null });
+//     }
+//     
+//     // Test Supabase connection
+//     const { data, error } = await supabase
+//       .from('votes')
+//       .select('*')
+//       .limit(5);
+//     
+//     if (error) {
+//       return res.json({ error: 'Supabase query error', details: error });
+//     }
+//     
+//     res.json({ 
+//       success: true, 
+//       supabase: 'connected',
+//       sampleData: data,
+//       totalRows: data.length
+//     });
+//   } catch (err) {
+//     res.json({ error: 'Debug error', details: err.message });
+//   }
+// });
+
 // Sonuçları getir
 app.get('/api/results', async (req, res) => {
   try {
@@ -594,16 +623,44 @@ app.get('/api/results', async (req, res) => {
     };
 
     if (supabase) {
-      // Supabase'den verileri al
-      const { data, error } = await supabase
-        .from('votes')
-        .select('candidate');
+      // Supabase'den verileri çek
+      
+      // Supabase'den tüm verileri al (pagination ile)
+      let allData = [];
+      let from = 0;
+      const batchSize = 1000;
+      let hasMore = true;
+      
+      while (hasMore) {
+        const { data: batchData, error: batchError } = await supabase
+          .from('votes')
+          .select('candidate')
+          .range(from, from + batchSize - 1);
+        
+        if (batchError) {
+          console.error('Batch error:', batchError);
+          break;
+        }
+        
+        if (batchData && batchData.length > 0) {
+          allData = allData.concat(batchData);
+          from += batchSize;
+          hasMore = batchData.length === batchSize;
+        } else {
+          hasMore = false;
+        }
+      }
+      
+      const data = allData;
+      const error = null;
 
       if (error) {
         console.error('Supabase error:', error);
         return res.status(500).json({ error: 'Sonuçlar alınamadı' });
       }
 
+      // Veri başarıyla alındı
+      
       results.total = data.length;
       data.forEach(vote => {
         if (results.hasOwnProperty(vote.candidate)) {
