@@ -81,8 +81,11 @@ function validateFingerprint(fingerprint) {
         return false;
     }
     
-    // Sadece güvenli karakterler (base64 + bazı özel karakterler)
-    const validPattern = /^[a-zA-Z0-9+/=._-]+$/;
+    // Yeni fingerprint formatları için genişletilmiş pattern
+    // fp_ ile başlayan normal fingerprint'ler
+    // fallback_ ile başlayan fallback fingerprint'ler
+    // Eski format için sadece alfanumerik karakterler
+    const validPattern = /^(fp_[a-zA-Z0-9_]+|fallback_[a-zA-Z0-9_]+|[a-zA-Z0-9+/=._-]+)$/;
     return validPattern.test(fingerprint);
 }
 

@@ -369,14 +369,23 @@
                 canvas.toDataURL()
             ].join('|');
             
-            // Simple hash function
-            let hash = 0;
+            // Gelişmiş hash function - daha uzun ve güvenli
+            let hash1 = 0;
+            let hash2 = 0;
             for (let i = 0; i < fingerprint.length; i++) {
                 const char = fingerprint.charCodeAt(i);
-                hash = ((hash << 5) - hash) + char;
-                hash = hash & hash; // Convert to 32-bit integer
+                hash1 = ((hash1 << 5) - hash1) + char;
+                hash1 = hash1 & hash1; // Convert to 32-bit integer
+                hash2 = ((hash2 << 3) - hash2) + char * 7;
+                hash2 = hash2 & hash2;
             }
-            return Math.abs(hash).toString(16);
+            
+            // Daha uzun fingerprint oluştur (minimum 10 karakter)
+            const baseHash = Math.abs(hash1).toString(16) + Math.abs(hash2).toString(16);
+            const timestamp = Date.now().toString(36);
+            const random = Math.random().toString(36).substring(2);
+            
+            return 'fp_' + baseHash + '_' + timestamp.substring(-4) + random.substring(0, 4);
         }
         
         window.generateBrowserFingerprint = generateSimpleFingerprint;
