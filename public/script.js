@@ -48,7 +48,7 @@ function generateFingerprint() {
     } catch (error) {
         console.warn('Fingerprint oluşturma hatası, fallback sisteme geçiliyor:', error);
         
-        // Güçlendirilmiş Fallback: Incognito mod için özel sistem
+        // Deterministik Fallback: Incognito mod için özel sistem
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
         ctx.textBaseline = 'top';
@@ -58,7 +58,7 @@ function generateFingerprint() {
         ctx.fillStyle = '#069';
         ctx.fillText('KKTC Seçim 2025 🗳️', 2, 2);
         ctx.fillStyle = 'rgba(102, 204, 0, 0.7)';
-        ctx.fillText('Incognito Fingerprint', 4, 17);
+        ctx.fillText('Deterministik Fingerprint', 4, 17);
         
         // WebGL fingerprinting (incognito modda bile çalışır)
         let webglInfo = '';
@@ -80,13 +80,13 @@ function generateFingerprint() {
         let audioFingerprint = '';
         try {
             const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            audioFingerprint = audioCtx.sampleRate + '|' + audioCtx.state + '|' + audioCtx.baseLatency;
+            audioFingerprint = audioCtx.sampleRate + '|' + audioCtx.state + '|' + (audioCtx.baseLatency || 'unknown');
             audioCtx.close();
         } catch (e) {
             audioFingerprint = 'audio_error';
         }
         
-        // Gelişmiş cihaz bilgileri (incognito modda bile mevcut)
+        // Deterministik cihaz bilgileri (zaman ve rastgele değer yok)
         const deviceInfo = [
             navigator.userAgent,
             navigator.language,
@@ -102,8 +102,6 @@ function generateFingerprint() {
             window.devicePixelRatio || 1,
             new Date().getTimezoneOffset(),
             Intl.DateTimeFormat().resolvedOptions().timeZone || 'unknown',
-            window.innerWidth + 'x' + window.innerHeight,
-            document.documentElement.clientWidth + 'x' + document.documentElement.clientHeight,
             canvas.toDataURL(),
             webglInfo,
             audioFingerprint,
@@ -111,9 +109,8 @@ function generateFingerprint() {
             'localStorage' in window,
             'sessionStorage' in window,
             'indexedDB' in window,
-            navigator.plugins ? navigator.plugins.length : 0,
-            // Zaman damgası ile session benzersizliği (incognito için)
-            Date.now().toString().slice(-6) // Son 6 hanesi
+            navigator.plugins ? navigator.plugins.length : 0
+            // Zaman damgası ve rastgele değer kaldırıldı - deterministik olması için
         ].join('|');
         
         // Çift hash algoritması
@@ -127,13 +124,19 @@ function generateFingerprint() {
             hash2 = hash2 & hash2;
         }
         
-        // Benzersiz fallback fingerprint oluştur
-        const timestamp = Date.now().toString(36);
-        const randomComponent = Math.random().toString(36).substring(2, 8);
-        userFingerprint = 'fallback_' + Math.abs(hash1).toString(36) + '_' + Math.abs(hash2).toString(36) + '_' + timestamp + '_' + randomComponent;
+        // Ek deterministik hash
+        let hash3 = 0;
+        const combinedHash = Math.abs(hash1).toString(36) + Math.abs(hash2).toString(36);
+        for (let i = 0; i < combinedHash.length; i++) {
+            hash3 = ((hash3 << 2) - hash3) + combinedHash.charCodeAt(i);
+            hash3 = hash3 & hash3;
+        }
+        
+        // Deterministik fallback fingerprint oluştur
+        userFingerprint = 'fallback_' + Math.abs(hash1).toString(36) + '_' + Math.abs(hash2).toString(36) + '_' + Math.abs(hash3).toString(36);
         userFingerprint = userFingerprint.substring(0, 50); // 50 karakter limit
         
-        console.log('Güçlendirilmiş fallback fingerprint generated:', userFingerprint.substring(0, 15) + '...');
+        console.log('Deterministik fallback fingerprint generated:', userFingerprint.substring(0, 15) + '...');
     }
     
     // Local storage'da kontrol et

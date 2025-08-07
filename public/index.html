@@ -353,7 +353,7 @@
     
     <!-- Simple Browser Fingerprinting -->
     <script>
-        // Basit tarayıcı parmak izi oluşturma
+        // Basit tarayıcı parmak izi oluşturma - Deterministik versiyon
         function generateSimpleFingerprint() {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
@@ -361,15 +361,26 @@
             ctx.font = '14px Arial';
             ctx.fillText('Browser fingerprint', 2, 2);
             
+            // Deterministik fingerprint bileşenleri (zaman ve rastgele değer yok)
             const fingerprint = [
                 navigator.userAgent,
                 navigator.language,
+                navigator.languages ? navigator.languages.join(',') : '',
+                navigator.platform,
                 screen.width + 'x' + screen.height,
+                screen.colorDepth,
+                screen.pixelDepth,
+                window.devicePixelRatio || 1,
                 new Date().getTimezoneOffset(),
+                Intl.DateTimeFormat().resolvedOptions().timeZone || 'unknown',
+                navigator.hardwareConcurrency || 'unknown',
+                navigator.maxTouchPoints || 0,
+                navigator.cookieEnabled,
+                navigator.doNotTrack,
                 canvas.toDataURL()
             ].join('|');
             
-            // Gelişmiş hash function - daha uzun ve güvenli
+            // Gelişmiş hash function - deterministik
             let hash1 = 0;
             let hash2 = 0;
             for (let i = 0; i < fingerprint.length; i++) {
@@ -380,12 +391,17 @@
                 hash2 = hash2 & hash2;
             }
             
-            // Daha uzun fingerprint oluştur (minimum 10 karakter)
+            // Deterministik fingerprint oluştur (zaman ve rastgele değer yok)
             const baseHash = Math.abs(hash1).toString(16) + Math.abs(hash2).toString(16);
-            const timestamp = Date.now().toString(36);
-            const random = Math.random().toString(36).substring(2);
             
-            return 'fp_' + baseHash + '_' + timestamp.substring(-4) + random.substring(0, 4);
+            // Ek deterministik hash
+            let hash3 = 0;
+            for (let i = 0; i < baseHash.length; i++) {
+                hash3 = ((hash3 << 2) - hash3) + baseHash.charCodeAt(i);
+                hash3 = hash3 & hash3;
+            }
+            
+            return 'fp_' + baseHash + '_' + Math.abs(hash3).toString(36).substring(0, 12);
         }
         
         window.generateBrowserFingerprint = generateSimpleFingerprint;
