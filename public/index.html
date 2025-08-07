@@ -352,7 +352,21 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <!-- FingerprintJS CDN -->
-    <script src="https://openfpcdn.io/fingerprintjs/v4"></script>
+    <script>
+        // FingerprintJS async loading
+        (function() {
+            const script = document.createElement('script');
+            script.src = 'https://openfpcdn.io/fingerprintjs/v4';
+            script.async = true;
+            script.onload = function() {
+                console.log('FingerprintJS yüklendi');
+            };
+            script.onerror = function() {
+                console.warn('FingerprintJS yüklenemedi, fallback sisteme geçiliyor');
+            };
+            document.head.appendChild(script);
+        })();
+    </script>
     
     <script src="script.js"></script>
 </body>
