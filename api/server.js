@@ -357,6 +357,21 @@ app.post('/api/vote', voteLimit, async (req, res) => {
         }
       }
 
+      // IP bazlı duplicate kontrol - Aynı IP'den zaten oy var mı?
+      const { data: existingIpVote } = await supabase
+        .from('votes')
+        .select('id, fingerprint, candidate, created_at')
+        .eq('ip_address', clientIp)
+        .limit(1);
+
+      if (existingIpVote && existingIpVote.length > 0) {
+        logVoteAttempt(clientIp, fingerprint, candidate, false, 'Aynı IP adresinden zaten oy kullanılmış');
+        return res.status(409).json({ 
+          error: 'Bu ağ bağlantısından zaten oy kullanılmış. Her IP adresinden sadece bir oy kabul edilir.',
+          details: 'Güvenlik nedeniyle aynı ağ bağlantısından birden fazla oy kullanılamaz.'
+        });
+      }
+
       // Atomik oy kaydetme - Doğrudan insert yap, hata alırsan duplicate demektir
       const { data, error } = await supabase
         .from('votes')
@@ -392,6 +407,16 @@ app.post('/api/vote', voteLimit, async (req, res) => {
     } else {
       // Demo modu - Atomik işlem (Race Condition koruması)
       
+      // IP bazlı duplicate kontrol (demo modu) - Aynı IP'den zaten oy var mı?
+      const existingIpVote = demoVoteHistory.find(vote => vote.ip_address === clientIp);
+      if (existingIpVote) {
+        logVoteAttempt(clientIp, fingerprint, candidate, false, 'Aynı IP adresinden zaten oy kullanılmış (demo)');
+        return res.status(409).json({ 
+          error: 'Bu ağ bağlantısından zaten oy kullanılmış. Her IP adresinden sadece bir oy kabul edilir.',
+          details: 'Güvenlik nedeniyle aynı ağ bağlantısından birden fazla oy kullanılamaz.'
+        });
+      }
+
       // Atomik fingerprint kontrolü - Önce kaydetmeye çalış, duplicate varsa hata ver
       if (demoFingerprints.has(fingerprint)) {
         logVoteAttempt(clientIp, fingerprint, candidate, false, 'Bu cihazdan zaten oy kullanılmış (demo)');
