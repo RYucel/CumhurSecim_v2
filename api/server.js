@@ -3,6 +3,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const { createClient } = require('@supabase/supabase-js');
+const axios = require('axios'); // VPN/Proxy kontrolü için
 require('dotenv').config();
 
 const app = express();
@@ -133,6 +134,30 @@ function getRealIpAddress(req) {
   return req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 'unknown';
 }
 
+// IP adresinin kalitesini kontrol eden fonksiyon (VPN/Proxy tespiti)
+async function checkIpForVpn(ip) {
+  try {
+    // Sadece proxy ve hosting bilgisini almak için fields parametresini kullanıyoruz.
+    // Bu, yanıt boyutunu küçültür ve işlemi hızlandırır.
+    const response = await axios.get(`http://ip-api.com/json/${ip}?fields=status,message,proxy,hosting`);
+
+    if (response.data.status === 'success') {
+      // Eğer 'proxy' veya 'hosting' (veri merkezi) true ise, bu şüpheli bir IP'dir.
+      const isVpnOrProxy = response.data.proxy || response.data.hosting;
+      return { isVpnOrProxy };
+    }
+     
+    // API'den başarısız bir yanıt gelirse
+    return { isVpnOrProxy: false, error: `API Error: ${response.data.message}` };
+
+  } catch (error) {
+    console.error('IP-API kontrolü sırasında hata:', error.message);
+    // Harici API'ye ulaşılamazsa, kullanıcıyı engellememek için
+    // şüpheli olmadığını varsayıyoruz (fail-open).
+    return { isVpnOrProxy: false, error: 'API connection failed' };
+  }
+}
+
 function logVoteAttempt(ip, fingerprint, candidate, success, reason = '') {
     const logEntry = {
         timestamp: new Date().toISOString(),
@@ -223,6 +248,16 @@ app.post('/api/vote', voteLimit, async (req, res) => {
     // Input sanitization
     candidate = sanitizeInput(candidate);
     fingerprint = sanitizeInput(fingerprint);
+    
+    // VPN/Proxy kontrolü - IP adresini aldıktan hemen sonra kontrol et
+    const ipCheck = await checkIpForVpn(clientIp);
+    if (ipCheck.isVpnOrProxy) {
+      logVoteAttempt(clientIp, fingerprint || 'unknown', candidate || 'unknown', false, 'VPN/Proxy detected');
+      return res.status(403).json({ 
+        error: 'VPN veya Proxy kullanımı tespit edildi. Lütfen normal internet bağlantısı kullanarak tekrar deneyin.',
+        details: 'Güvenlik nedeniyle VPN, Proxy veya veri merkezi IP adresleri engellenmektedir.'
+      });
+    }
     
     // Temel validasyonlar
     if (!candidate || !fingerprint) {
